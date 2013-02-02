@@ -41,7 +41,9 @@ public:
 
 private:
 	static void loadRecursive(MeshPart& part, bool invert,
-			std::vector<float>& vertex_data, const aiScene* scene, const aiNode* node);
+			std::vector<float>& vertex_data, 
+			std::vector<float>& normal_data,
+			const aiScene* scene, const aiNode* node);
 			
 	const aiScene* scene;
 	MeshPart root;

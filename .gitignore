@@ -16,7 +16,8 @@
 Thumbs.db
 #Ignore files build by Visual Studio
 *.opensdf
-
+*.ipch
+*.sdf
 *.obj
 *.exe
 *.pdb

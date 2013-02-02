@@ -83,7 +83,8 @@ void GameManager::setOpenGLStates()
 
 void GameManager::createMatrices() 
 {
-	projection_matrix = glm::perspective(45.0f,	window_width / (float) window_height, 1.0f, 10.f);
+	FoV = 45.0f;
+	projection_matrix = glm::perspective(FoV,	window_width / (float) window_height, 1.0f, 10.f);
 	model_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(3));
 	view_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f));
 }
@@ -116,6 +117,8 @@ void GameManager::createVAO()
 	  * Add normals to shader here, when you have loaded from file
 	  * i.e., remove the below line, and add the proper normals instead.
 	  */
+
+	model->getNormals()->bind();
 	program->setAttributePointer("normal", 3);
 	
 	//Unbind VBOs and VAO
@@ -204,6 +207,18 @@ void GameManager::play()
 				if (event.key.keysym.sym == SDLK_q
 						&& event.key.keysym.mod & KMOD_CTRL) //Ctrl+q
 					doExit = true;
+				if(event.key.keysym.sym == SDLK_PAGEUP)
+				{
+					FoV -= 10.0f;
+					projection_matrix = glm::perspective(FoV,	window_width / (float) window_height, 1.0f, 10.f);
+					glUniformMatrix4fv(program->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
+				}
+				if(event.key.keysym.sym == SDLK_PAGEDOWN)
+				{
+					FoV += 10.0f;
+					projection_matrix = glm::perspective(FoV,	window_width / (float) window_height, 1.0f, 10.f);
+					glUniformMatrix4fv(program->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
+				}
 				break;
 			case SDL_QUIT: //e.g., user clicks the upper right x
 				doExit = true;

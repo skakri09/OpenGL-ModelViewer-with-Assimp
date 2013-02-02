@@ -109,6 +109,8 @@ private:
 	VirtualTrackball trackball;
 	SDL_Window* main_window; //< Our window handle
 	SDL_GLContext main_context; //< Our opengl context handle 
+
+	float FoV;
 };
 
 #endif // _GAMEMANAGER_H_
