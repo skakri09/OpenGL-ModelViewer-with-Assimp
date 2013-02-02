@@ -63,6 +63,7 @@ private:
 	glm::quat quat_new; //View matrix that represents the new camera position
 
 	glm::vec3 point_on_sphere_begin; //Vector from origin to first point on the unit sphere
+
 };
 
 #endif
