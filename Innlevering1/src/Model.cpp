@@ -94,7 +94,6 @@ void Model::loadRecursive(MeshPart& part, bool invert,
 					normal_data.push_back(mesh->mNormals[index].y);
 					normal_data.push_back(mesh->mNormals[index].z);
 				}
-				
 			}
 		}
 	}

@@ -84,6 +84,11 @@ protected:
 	static const unsigned int window_width = 800;
 	static const unsigned int window_height = 600;
 
+
+	void ZoomIn();
+
+	void ZoomOut();
+
 private:
 	static void renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<GLUtils::Program>& program, 
 									const glm::mat4& modelview, const glm::mat4& transform);
