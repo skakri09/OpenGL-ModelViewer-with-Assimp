@@ -109,7 +109,7 @@ void GameManager::createVAO()
 	glBindVertexArray(vao);
 	CHECK_GL_ERROR();
 
-	model.reset(new Model("models/toyplane.obj", false));
+	model.reset(new Model("models/bunny.obj", false));
 	model->getVertices()->bind();
 	program->setAttributePointer("position", 3);
 	CHECK_GL_ERROR();
@@ -249,6 +249,7 @@ void GameManager::ZoomIn()
 	FoV -= 5.0f;
 	if(FoV < 0.0001f)
 		FoV = 0.0001f;
+
 	projection_matrix = glm::perspective(FoV,	window_width / (float) window_height, 1.0f, 10.f);
 	glUniformMatrix4fv(program->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
 
@@ -260,7 +261,9 @@ void GameManager::ZoomOut()
 	FoV += 5.0f;
 	if(FoV > 179.999f)
 		FoV = 179.999f;
+
 	projection_matrix = glm::perspective(FoV,	window_width / (float) window_height, 1.0f, 10.f);
 	glUniformMatrix4fv(program->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
+
 	std::cout << "FoV: " << FoV << std::endl;
 }

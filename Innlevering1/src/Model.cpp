@@ -10,7 +10,7 @@ Model::Model(std::string filename, bool invert)
 	std::vector<float> vertex_data, normal_data;
 	aiMatrix4x4 trafo;
 	aiIdentityMatrix4(&trafo);
-
+		
 	scene = aiImportFile(filename.c_str(), aiProcessPreset_TargetRealtime_Quality);// | aiProcess_FlipWindingOrder);
 	if (!scene) 
 	{
@@ -23,11 +23,20 @@ Model::Model(std::string filename, bool invert)
 	  * FIXME: Alter loadRecursive, so that it also loads normal data
 	  */
 	//Load the model recursively into data
-	loadRecursive(root, invert, vertex_data, normal_data, scene, scene->mRootNode);
+	max_dim = -glm::vec3(std::numeric_limits<float>::max());
+	min_dim = glm::vec3(std::numeric_limits<float>::max());
+
+	loadRecursive(root, invert, vertex_data, normal_data, max_dim, min_dim, scene, scene->mRootNode);
 	
+	std::cout << "min x: " << min_dim.x << " min y: " << min_dim.y << " min z: " << min_dim.z << std::endl;
+	std::cout << "max x: " << max_dim.x << " max y: " << max_dim.y << " max z: " << max_dim.z << std::endl;
+
+	float diameter = glm::distance(min_dim, max_dim);
+	std::cout << "diameter = " << diameter << std::endl;
+
 	//Set the transformation matrix for the root node
 	//These are hard-coded constants for the stanford bunny model.
-	root.transform = glm::scale(root.transform, glm::vec3(6.44));
+	root.transform = glm::scale(root.transform, glm::vec3(1.0f/diameter));
 	root.transform = glm::translate(root.transform, glm::vec3(0.016800813, -0.11015295, 0.0014822669));
 
 	n_vertices = vertex_data.size();
@@ -40,6 +49,7 @@ Model::Model(std::string filename, bool invert)
 	}
 	else
 		THROW_EXCEPTION("The number of vertices in the mesh is wrong");
+
 }
 
 Model::~Model() 
@@ -50,8 +60,10 @@ Model::~Model()
 void Model::loadRecursive(MeshPart& part, bool invert,
 			std::vector<float>& vertex_data,
 			std::vector<float>& normal_data,
+			glm::vec3& max_dim, glm::vec3& min_dim,
 			const aiScene* scene, const aiNode* node) 
 {
+
 	//update transform matrix. notice that we also transpose it
 	aiMatrix4x4 m = node->mTransformation;
 	for (int j=0; j<4; ++j)
@@ -84,9 +96,27 @@ void Model::loadRecursive(MeshPart& part, bool invert,
 			for(unsigned int i = 0; i < face->mNumIndices; i++) 
 			{
 				int index = face->mIndices[i];
-				vertex_data.push_back(mesh->mVertices[index].x);
-				vertex_data.push_back(mesh->mVertices[index].y);
-				vertex_data.push_back(mesh->mVertices[index].z);
+				float x = mesh->mVertices[index].x;
+				float y = mesh->mVertices[index].y;
+				float z = mesh->mVertices[index].z;
+
+				vertex_data.push_back(x);
+				vertex_data.push_back(y);
+				vertex_data.push_back(z);
+
+				if(x < min_dim.x)
+					min_dim.x = x;
+				if(y < min_dim.y)
+					min_dim.y = y;
+				if(z < min_dim.z)
+					min_dim.z = z;
+
+				if(x > max_dim.x)
+					max_dim.x = x;
+				if(y > max_dim.y)
+					max_dim.y = y;
+				if(z > max_dim.z)
+					max_dim.z = z;
 
 				if(hasNormals)
 				{
@@ -98,10 +128,11 @@ void Model::loadRecursive(MeshPart& part, bool invert,
 		}
 	}
 
+
 	// load all children
 	for (unsigned int n = 0; n < node->mNumChildren; ++n) 
 	{
 		part.children.push_back(MeshPart());
-		loadRecursive(part.children.back(), invert, vertex_data, normal_data, scene, node->mChildren[n]);
+		loadRecursive(part.children.back(), invert, vertex_data, normal_data, max_dim, min_dim, scene, node->mChildren[n]);
 	}
 }
