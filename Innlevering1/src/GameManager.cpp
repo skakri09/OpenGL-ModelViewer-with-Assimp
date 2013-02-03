@@ -143,6 +143,7 @@ void GameManager::init()
 	createMatrices();
 	createSimpleProgram();
 	createVAO();
+	renderMode = RENDERMODE_PHONG;
 }
 
 void GameManager::renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<Program>& program, 
@@ -174,6 +175,23 @@ void GameManager::render()
 	//Render geometry
 	glBindVertexArray(vao);
 	
+	switch(renderMode)
+	{
+	case RENDERMODE_PHONG:
+
+		break;
+	case RENDERMODE_FLAT:
+
+		break;
+	case RENDERMODE_WIREFRAME:
+
+		break;
+	case RENDERMODE_HIDDEN_LINE:
+
+		break;
+	default:
+		THROW_EXCEPTION("Rendermode not supported");
+	}
 	renderMeshRecursive(model->getMesh(), program, view_matrix_new, model_matrix);
 
 	glBindVertexArray(0);
@@ -194,13 +212,9 @@ void GameManager::play()
 			{
 			case SDL_MOUSEWHEEL:
 				if (event.wheel.y > 0 )
-				{
 					ZoomIn();
-				}
-				if (event.wheel.y < 0 )
-				{
+				else if (event.wheel.y < 0 )
 					ZoomOut();
-				}
 				break;
 			case SDL_MOUSEBUTTONDOWN:
 				trackball.rotateBegin(event.motion.x, event.motion.y);
@@ -225,6 +239,7 @@ void GameManager::play()
 				{
 					ZoomOut();
 				}
+				DetermineRenderMode(event.key.keysym.sym);
 				break;
 			case SDL_QUIT: //e.g., user clicks the upper right x
 				doExit = true;
@@ -266,4 +281,24 @@ void GameManager::ZoomOut()
 	glUniformMatrix4fv(program->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
 
 	std::cout << "FoV: " << FoV << std::endl;
+}
+
+void GameManager::DetermineRenderMode(SDL_Keycode keyCode)
+{
+	//Phong shading
+	if(keyCode == SDLK_1)
+		renderMode = RENDERMODE_PHONG;
+
+	//Flat Shading
+	else if(keyCode == SDLK_2)
+		renderMode = RENDERMODE_FLAT;
+
+	//wireframe
+	else if(keyCode == SDLK_3)
+		renderMode = RENDERMODE_WIREFRAME;
+
+	//hidden line
+	else if(keyCode == SDLK_4)
+		renderMode = RENDERMODE_HIDDEN_LINE;
+	
 }

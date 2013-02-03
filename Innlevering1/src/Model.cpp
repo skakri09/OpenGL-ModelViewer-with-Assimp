@@ -104,6 +104,7 @@ void Model::loadRecursive(MeshPart& part, bool invert,
 				vertex_data.push_back(y);
 				vertex_data.push_back(z);
 
+
 				if(x < min_dim.x)
 					min_dim.x = x;
 				if(y < min_dim.y)
