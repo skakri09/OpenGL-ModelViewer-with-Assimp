@@ -30,17 +30,25 @@ glm::mat4 quatToMat4(glm::quat m_q)
 
 	//return retMat;
 	const float s = 2.0f;
-	glm::mat4 retVal;
+	glm::mat4 retMat;
 
-	//fix
-	m_q = glm::normalize(m_q);
-	//clean 
-	retVal = glm::mat4(
-		1 - (s * (pow(m_q.y, 2) + pow(m_q.z, 2))), s * (m_q.x * m_q.y - m_q.w * m_q.z),   s * (m_q.x * m_q.z + m_q.w * m_q.y),   0,
-		s * (m_q.x * m_q.y + m_q.w * m_q.z),    1 - (s * (pow(m_q.x, 2) + pow(m_q.z, 2))), s * (m_q.y * m_q.z - m_q.w * m_q.x),   0,
-		s * (m_q.x * m_q.z - m_q.w * m_q.y),    s * (m_q.y * m_q.z + m_q.w * m_q.x),   1 - (s * (pow(m_q.x, 2) + pow(m_q.y, 2))), 0,
-		0,          0,          0,          1);
-	return retVal;
+	if(abs(glm::length(m_q) - 1.0f) > 0.000001f)
+		m_q = glm::normalize(m_q);
+
+	retMat = glm::mat4(
+		1 - (s * (pow(m_q.y, 2) + pow(m_q.z, 2))), 
+		s * (m_q.x * m_q.y - m_q.w * m_q.z),   
+		s * (m_q.x * m_q.z + m_q.w * m_q.y),   
+		0,
+		s * (m_q.x * m_q.y + m_q.w * m_q.z),    
+		1 - (s * (pow(m_q.x, 2) + pow(m_q.z, 2))), 
+		s * (m_q.y * m_q.z - m_q.w * m_q.x),   
+		0,
+		s * (m_q.x * m_q.z - m_q.w * m_q.y),    
+		s * (m_q.y * m_q.z + m_q.w * m_q.x),   
+		1 - (s * (pow(m_q.x, 2) + pow(m_q.y, 2))), 
+		0, 0, 0, 0, 1);
+	return retMat;
 }
 
 VirtualTrackball::VirtualTrackball() 
@@ -93,7 +101,7 @@ glm::mat4 VirtualTrackball::rotate(int x, int y)
 
 	theta = glm::acos(glm::dot(point_on_sphere_begin, point_on_sphere_end));
 	theta*= 500;
-	quat_new = glm::rotate(quat_old, theta, axis_of_rotation);
+	quat_new = glm::rotate(quat_old, -theta, axis_of_rotation);
 	//std::cout << "Angle: " << theta << std::endl;
 	//std::cout << "Axis: " << axis_of_rotation.x << " " << axis_of_rotation.y << " " << axis_of_rotation.z << std::endl;
 
