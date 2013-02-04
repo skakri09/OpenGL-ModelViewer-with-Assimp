@@ -92,8 +92,8 @@ protected:
 private:
 	enum RenderMode
 	{
-		RENDERMODE_FLAT,
 		RENDERMODE_PHONG,
+		RENDERMODE_FLAT,
 		RENDERMODE_WIREFRAME,
 		RENDERMODE_HIDDEN_LINE
 	};
@@ -101,7 +101,7 @@ private:
 	RenderMode renderMode;
 
 	static void renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<GLUtils::Program>& program, 
-									const glm::mat4& modelview, const glm::mat4& transform);
+									const glm::mat4& modelview, const glm::mat4& transform, RenderMode mode);
 
 	void DetermineRenderMode(SDL_Keycode keyCode);
 

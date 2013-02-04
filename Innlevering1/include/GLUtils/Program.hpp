@@ -42,7 +42,8 @@ public:
 		return loc;
 	}
 
-	inline void setAttributePointer(std::string var, unsigned int size, GLenum type=GL_FLOAT, GLboolean normalized=GL_FALSE, GLsizei stride=0, GLvoid* pointer=NULL) {
+	inline void setAttributePointer(std::string var, unsigned int size, GLenum type=GL_FLOAT, 
+						GLboolean normalized=GL_FALSE, GLsizei stride=0, GLvoid* pointer=NULL) {
 		GLint loc = glGetAttribLocation(name, var.c_str());
 		assert(loc >= 0);
 		glVertexAttribPointer(loc, size, type, normalized, stride, pointer);
