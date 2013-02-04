@@ -138,12 +138,14 @@ void GameManager::init()
 	}
 	atexit( SDL_Quit);
 
+	renderMode = RENDERMODE_PHONG;
+	
 	createOpenGLContext();
 	setOpenGLStates();
 	createMatrices();
 	createSimpleProgram();
 	createVAO();
-	renderMode = RENDERMODE_PHONG;
+	
 }
 
 void GameManager::renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<Program>& program, 
@@ -178,7 +180,7 @@ void GameManager::render()
 	switch(renderMode)
 	{
 	case RENDERMODE_PHONG:
-
+		renderMeshRecursive(model->getMesh(), program, view_matrix_new, model_matrix);
 		break;
 	case RENDERMODE_FLAT:
 
@@ -192,7 +194,7 @@ void GameManager::render()
 	default:
 		THROW_EXCEPTION("Rendermode not supported");
 	}
-	renderMeshRecursive(model->getMesh(), program, view_matrix_new, model_matrix);
+	
 
 	glBindVertexArray(0);
 	CHECK_GL_ERROR();
