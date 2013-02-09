@@ -91,16 +91,18 @@ void GameManager::createMatrices()
 
 void GameManager::createSimpleProgram() 
 {
-	std::string fs_src = readFile("shaders/phong.frag");
-	std::string vs_src = readFile("shaders/phong.vert");
+	prog_phong = createProgram("shaders/phong.vert", "shaders/phong.frag");
+	prog_flat = createProgram("shaders/flat.vert", "shaders/flat.frag");
+	//std::string fs_src = readFile("shaders/phong.frag");
+	//std::string vs_src = readFile("shaders/phong.vert");
 
-	//Compile shaders, attach to program object, and link
-	program.reset(new Program(vs_src, fs_src));
+	////Compile shaders, attach to program object, and link
+	//prog_phong.reset(new Program(vs_src, fs_src));
 
-	//Set uniforms for the program.
-	program->use();
-	glUniformMatrix4fv(program->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
-	program->disuse();
+	////Set uniforms for the program.
+	//prog_phong->use();
+	//glUniformMatrix4fv(prog_phong->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
+	//prog_phong->disuse();
 }
 
 void GameManager::createVAO() 
@@ -112,14 +114,14 @@ void GameManager::createVAO()
 	model.reset(new Model("models/bunny.obj", false));
 	//model->getVertices()->bind();
 	model->getInterleavedVBO()->bind();
-	program->setAttributePointer("position", 3, GL_FLOAT, GL_FALSE, model->getStride(), model->getVerticeOffset());
+	prog_phong->setAttributePointer("position", 3, GL_FLOAT, GL_FALSE, model->getStride(), model->getVerticeOffset());
 	/**
 	  * Add normals to shader here, when you have loaded from file
 	  * i.e., remove the below line, and add the proper normals instead.
 	  */
 
 	//model->getNormals()->bind();
-	program->setAttributePointer("normal", 3, GL_FLOAT, GL_FALSE, model->getStride(), model->getNormalOffset());
+	prog_phong->setAttributePointer("normal", 3, GL_FLOAT, GL_FALSE, model->getStride(), model->getNormalOffset());
 	
 	//Unbind VBOs and VAO
 	glBindVertexArray(0);
@@ -172,7 +174,7 @@ void GameManager::render()
 {
 	//Clear screen, and set the correct program
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	program->use();
+	
 	
 	glm::mat4 view_matrix_new = view_matrix*trackball_view_matrix;
 
@@ -182,10 +184,12 @@ void GameManager::render()
 	switch(renderMode)
 	{
 	case RENDERMODE_PHONG:
-		renderMeshRecursive(model->getMesh(), program, view_matrix_new, model_matrix, renderMode);
+		prog_phong->use();
+		//renderMeshRecursive(model->getMesh(), prog_phong, view_matrix_new, model_matrix, renderMode);
 		break;
 	case RENDERMODE_FLAT:
-		renderMeshRecursive(model->getMesh(), program, view_matrix_new, model_matrix, renderMode);
+		prog_flat->use();
+		//renderMeshRecursive(model->getMesh(), prog_phong, view_matrix_new, model_matrix, renderMode);
 		break;
 	case RENDERMODE_WIREFRAME:
 
@@ -196,7 +200,7 @@ void GameManager::render()
 	default:
 		THROW_EXCEPTION("Rendermode not supported");
 	}
-	
+	renderMeshRecursive(model->getMesh(), prog_phong, view_matrix_new, model_matrix, renderMode);
 
 	glBindVertexArray(0);
 	CHECK_GL_ERROR();
@@ -270,7 +274,7 @@ void GameManager::ZoomIn()
 		FoV = 0.0001f;
 
 	projection_matrix = glm::perspective(FoV,	window_width / (float) window_height, 1.0f, 10.f);
-	glUniformMatrix4fv(program->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
+	glUniformMatrix4fv(prog_phong->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
 
 	std::cout << "FoV: " << FoV << std::endl;
 }
@@ -282,7 +286,7 @@ void GameManager::ZoomOut()
 		FoV = 179.999f;
 
 	projection_matrix = glm::perspective(FoV,	window_width / (float) window_height, 1.0f, 10.f);
-	glUniformMatrix4fv(program->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
+	glUniformMatrix4fv(prog_phong->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
 
 	std::cout << "FoV: " << FoV << std::endl;
 }
@@ -305,4 +309,20 @@ void GameManager::DetermineRenderMode(SDL_Keycode keyCode)
 	else if(keyCode == SDLK_4)
 		renderMode = RENDERMODE_HIDDEN_LINE;
 	
+}
+
+std::shared_ptr<GLUtils::Program> GameManager::createProgram( std::string vs_path, std::string fs_Path)
+{
+	std::shared_ptr<GLUtils::Program> program;
+	std::string fs_src = readFile(fs_Path);
+	std::string vs_src = readFile(vs_path);
+
+	//Compile shaders, attach to program object, and link
+	program.reset(new Program(vs_src, fs_src));
+
+	//Set uniforms for the program.
+	program->use();
+	glUniformMatrix4fv(program->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
+	program->disuse();
+	return program;
 }

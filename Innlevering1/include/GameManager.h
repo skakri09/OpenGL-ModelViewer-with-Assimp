@@ -81,8 +81,8 @@ protected:
 	 */
 	void createVAO();
 
-	static const unsigned int window_width = 800;
-	static const unsigned int window_height = 600;
+	static const unsigned int window_width = 1280;
+	static const unsigned int window_height = 720;
 
 
 	void ZoomIn();
@@ -108,7 +108,10 @@ private:
 	GLuint vao; //< Vertex array object
 	
 	//GLuint program; //< OpenGL shader program
-	std::shared_ptr<GLUtils::Program> program;
+	std::shared_ptr<GLUtils::Program> prog_phong;
+	std::shared_ptr<GLUtils::Program> prog_flat;
+
+	std::shared_ptr<GLUtils::Program> createProgram(std::string vs_path, std::string fs_Path);
 
 	std::shared_ptr<Model> model;
 
