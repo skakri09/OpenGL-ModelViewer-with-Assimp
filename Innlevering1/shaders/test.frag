@@ -28,7 +28,6 @@ void main() {
 	{
 		n = normalize(normal_smooth);
 	}
-   // vec3 n = normalize(normal_flat);
     
 	float diff = max(0.1f, dot(n, l));
     float spec = pow(max(0.0f, dot(n, h)), 500.0f);

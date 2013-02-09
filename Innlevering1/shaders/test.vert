@@ -2,7 +2,7 @@
 uniform mat4 projection_matrix;
 uniform mat4 modelview_matrix;
 uniform mat3 normal_matrix;
-uniform sampler2D 
+
 // 0 = phong, 1 = flat, 2 = wireframe, 3 = hidden_line
 uniform int render_mode;
 
