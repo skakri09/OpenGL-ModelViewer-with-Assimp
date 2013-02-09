@@ -36,10 +36,17 @@ public:
 	~Model();
 
 	inline MeshPart getMesh() {return root;}
+
+	inline std::shared_ptr<GLUtils::VBO> getInterleavedVBO(){return interleavedVBO;}
+	
 	inline std::shared_ptr<GLUtils::VBO> getVertices() {return vertices;}
 	inline std::shared_ptr<GLUtils::VBO> getNormals() {return normals;}
 	inline std::shared_ptr<GLUtils::VBO> getTexCoords(){return texCoords;}
 
+	inline GLint getStride(){return stride;}
+	inline GLvoid* getVerticeOffset() {return verticeOffset;}
+	inline GLvoid* getNormalOffset() {return normalOffset;}
+	inline GLvoid* getTexCoordOffset() {return texCoordOffset;}
 
 private:
 	static void loadRecursive(MeshPart& part, bool invert,
@@ -48,14 +55,20 @@ private:
 			std::vector<float>& texture_data,
 			glm::vec3& max_dim, glm::vec3& min_dim,
 			const aiScene* scene, const aiNode* node);
-			
+	
+	static void loadRecursive(MeshPart& part, bool invert,
+		std::vector<float>& data,
+		glm::vec3& max_dim, glm::vec3& min_dim,
+		const aiScene* scene, const aiNode* node);
+
+
 	static void checkDimensions(float x, float y, float z, 
 								glm::vec3& max_dim, glm::vec3& min_dim);
 
 	const aiScene* scene;
 	MeshPart root;
 
-
+	std::shared_ptr<GLUtils::VBO> interleavedVBO;
 	std::shared_ptr<GLUtils::VBO> normals;
 	std::shared_ptr<GLUtils::VBO> vertices;
 	std::shared_ptr<GLUtils::VBO> texCoords;
@@ -64,6 +77,12 @@ private:
 	glm::vec3 max_dim;
 
 	unsigned int n_vertices;
+	unsigned int dataSize;
+	
+	GLint stride;
+	GLvoid* verticeOffset;
+	GLvoid* normalOffset;
+	GLvoid* texCoordOffset;
 };
 
 #endif

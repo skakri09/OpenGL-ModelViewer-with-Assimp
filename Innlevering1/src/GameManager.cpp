@@ -110,16 +110,16 @@ void GameManager::createVAO()
 	CHECK_GL_ERROR();
 
 	model.reset(new Model("models/bunny.obj", false));
-	model->getVertices()->bind();
-	program->setAttributePointer("position", 3);
-	CHECK_GL_ERROR();
+	//model->getVertices()->bind();
+	model->getInterleavedVBO()->bind();
+	program->setAttributePointer("position", 3, GL_FLOAT, GL_FALSE, model->getStride(), model->getVerticeOffset());
 	/**
 	  * Add normals to shader here, when you have loaded from file
 	  * i.e., remove the below line, and add the proper normals instead.
 	  */
 
-	model->getNormals()->bind();
-	program->setAttributePointer("normal", 3);
+	//model->getNormals()->bind();
+	program->setAttributePointer("normal", 3, GL_FLOAT, GL_FALSE, model->getStride(), model->getNormalOffset());
 	
 	//Unbind VBOs and VAO
 	glBindVertexArray(0);
