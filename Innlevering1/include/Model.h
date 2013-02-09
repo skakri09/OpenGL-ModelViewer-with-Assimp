@@ -38,11 +38,14 @@ public:
 	inline MeshPart getMesh() {return root;}
 	inline std::shared_ptr<GLUtils::VBO> getVertices() {return vertices;}
 	inline std::shared_ptr<GLUtils::VBO> getNormals() {return normals;}
+	inline std::shared_ptr<GLUtils::VBO> getTexCoords(){return texCoords;}
+
 
 private:
 	static void loadRecursive(MeshPart& part, bool invert,
 			std::vector<float>& vertex_data, 
 			std::vector<float>& normal_data,
+			std::vector<float>& texture_data,
 			glm::vec3& max_dim, glm::vec3& min_dim,
 			const aiScene* scene, const aiNode* node);
 			
@@ -53,7 +56,7 @@ private:
 
 	std::shared_ptr<GLUtils::VBO> normals;
 	std::shared_ptr<GLUtils::VBO> vertices;
-
+	std::shared_ptr<GLUtils::VBO> texCoords;
 	glm::vec3 min_dim;
 	glm::vec3 max_dim;
 

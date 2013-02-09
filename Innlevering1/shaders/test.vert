@@ -28,7 +28,7 @@ void main() {
 	if(render_mode == 0)
 	{
 		normal_smooth = normal_matrix*normal;
-		color = vec3(1.0f, 1.0f, 1.0f);
+		color = vec3(0.5f, 0.0f, 0.0f);
 	}
 	else if(render_mode == 1)
 	{

@@ -7,7 +7,7 @@
 
 Model::Model(std::string filename, bool invert) 
 {
-	std::vector<float> vertex_data, normal_data;
+	std::vector<float> vertex_data, normal_data, texture_data;
 	aiMatrix4x4 trafo;
 	aiIdentityMatrix4(&trafo);
 		
@@ -26,7 +26,7 @@ Model::Model(std::string filename, bool invert)
 	max_dim = -glm::vec3(std::numeric_limits<float>::max());
 	min_dim = glm::vec3(std::numeric_limits<float>::max());
 
-	loadRecursive(root, invert, vertex_data, normal_data, max_dim, min_dim, scene, scene->mRootNode);
+	loadRecursive(root, invert, vertex_data, normal_data, texture_data, max_dim, min_dim, scene, scene->mRootNode);
 	
 	std::cout << "min x: " << min_dim.x << " min y: " << min_dim.y << " min z: " << min_dim.z << std::endl;
 	std::cout << "max x: " << max_dim.x << " max y: " << max_dim.y << " max z: " << max_dim.z << std::endl;
@@ -46,6 +46,7 @@ Model::Model(std::string filename, bool invert)
 	{
 		vertices.reset(new GLUtils::VBO(vertex_data.data(), n_vertices*sizeof(float)));
 		normals.reset(new GLUtils::VBO(normal_data.data(), n_vertices*sizeof(float)));
+		texCoords.reset(new GLUtils::VBO(texture_data.data(), n_vertices*sizeof(float)));
 	}
 	else
 		THROW_EXCEPTION("The number of vertices in the mesh is wrong");
@@ -60,6 +61,7 @@ Model::~Model()
 void Model::loadRecursive(MeshPart& part, bool invert,
 			std::vector<float>& vertex_data,
 			std::vector<float>& normal_data,
+			std::vector<float>& texture_data,
 			glm::vec3& max_dim, glm::vec3& min_dim,
 			const aiScene* scene, const aiNode* node) 
 {
@@ -84,7 +86,7 @@ void Model::loadRecursive(MeshPart& part, bool invert,
 		vertex_data.reserve(vertex_data.size() + part.count*3);
 
 		bool hasNormals = mesh->HasNormals();
-
+		
 		//Add the vertices from file
 		for (unsigned int t = 0; t < mesh->mNumFaces; ++t) 
 		{
@@ -104,6 +106,12 @@ void Model::loadRecursive(MeshPart& part, bool invert,
 				vertex_data.push_back(y);
 				vertex_data.push_back(z);
 
+				if(mesh->HasTextureCoords(index))
+				{
+					texture_data.push_back(mesh->mTextureCoords[index]->x);
+					texture_data.push_back(mesh->mTextureCoords[index]->y);
+					texture_data.push_back(mesh->mTextureCoords[index]->z);
+				}
 
 				if(x < min_dim.x)
 					min_dim.x = x;
@@ -134,6 +142,6 @@ void Model::loadRecursive(MeshPart& part, bool invert,
 	for (unsigned int n = 0; n < node->mNumChildren; ++n) 
 	{
 		part.children.push_back(MeshPart());
-		loadRecursive(part.children.back(), invert, vertex_data, normal_data, max_dim, min_dim, scene, node->mChildren[n]);
+		loadRecursive(part.children.back(), invert, vertex_data, normal_data, texture_data, max_dim, min_dim, scene, node->mChildren[n]);
 	}
 }
