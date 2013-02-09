@@ -49,14 +49,17 @@ private:
 			glm::vec3& max_dim, glm::vec3& min_dim,
 			const aiScene* scene, const aiNode* node);
 			
-
+	static void checkDimensions(float x, float y, float z, 
+								glm::vec3& max_dim, glm::vec3& min_dim);
 
 	const aiScene* scene;
 	MeshPart root;
 
+
 	std::shared_ptr<GLUtils::VBO> normals;
 	std::shared_ptr<GLUtils::VBO> vertices;
 	std::shared_ptr<GLUtils::VBO> texCoords;
+	
 	glm::vec3 min_dim;
 	glm::vec3 max_dim;
 

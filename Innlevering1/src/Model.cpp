@@ -101,6 +101,9 @@ void Model::loadRecursive(MeshPart& part, bool invert,
 				float x = mesh->mVertices[index].x;
 				float y = mesh->mVertices[index].y;
 				float z = mesh->mVertices[index].z;
+				
+				//checks if the x, y or z should be part of the bounding box
+				checkDimensions(x, y, z, max_dim, min_dim);
 
 				vertex_data.push_back(x);
 				vertex_data.push_back(y);
@@ -112,20 +115,6 @@ void Model::loadRecursive(MeshPart& part, bool invert,
 					texture_data.push_back(mesh->mTextureCoords[index]->y);
 					texture_data.push_back(mesh->mTextureCoords[index]->z);
 				}
-
-				if(x < min_dim.x)
-					min_dim.x = x;
-				if(y < min_dim.y)
-					min_dim.y = y;
-				if(z < min_dim.z)
-					min_dim.z = z;
-
-				if(x > max_dim.x)
-					max_dim.x = x;
-				if(y > max_dim.y)
-					max_dim.y = y;
-				if(z > max_dim.z)
-					max_dim.z = z;
 
 				if(hasNormals)
 				{
@@ -144,4 +133,21 @@ void Model::loadRecursive(MeshPart& part, bool invert,
 		part.children.push_back(MeshPart());
 		loadRecursive(part.children.back(), invert, vertex_data, normal_data, texture_data, max_dim, min_dim, scene, node->mChildren[n]);
 	}
+}
+
+void Model::checkDimensions( float x, float y, float z, glm::vec3& max_dim, glm::vec3& min_dim)
+{
+	if(x < min_dim.x)
+		min_dim.x = x;
+	if(y < min_dim.y)
+		min_dim.y = y;
+	if(z < min_dim.z)
+		min_dim.z = z;
+
+	if(x > max_dim.x)
+		max_dim.x = x;
+	if(y > max_dim.y)
+		max_dim.y = y;
+	if(z > max_dim.z)
+		max_dim.z = z;
 }

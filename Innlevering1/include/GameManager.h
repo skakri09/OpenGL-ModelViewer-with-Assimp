@@ -107,9 +107,6 @@ private:
 
 	GLuint vao; //< Vertex array object
 	
-	//GLuint vertex_vbo; //< VBO for vertex data
-	std::shared_ptr<GLUtils::VBO> vertices, normals;
-	
 	//GLuint program; //< OpenGL shader program
 	std::shared_ptr<GLUtils::Program> program;
 

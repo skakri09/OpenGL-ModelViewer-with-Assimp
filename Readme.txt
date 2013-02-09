@@ -7,3 +7,6 @@ Aksen og gradene brukes til å konstruere queternionen som blir brukt til å lage 
 Zoom er implementert ved å endre på FoV verdien når man trykker page up/down, eller scroller med musen. Når FoV verdien økes blir "linsen" til kameraet bredere, og modellen blir mindre på skjermen. Når FoV verdien minskes, blir "linsen" smalere, og modellen blir større på skjermen. Jeg har valgt å bruke én float som FoV, og gjøre denne større/mindre direkte, istedenfor å ha en konstant FoV som deles på en zoomFactor. Dette da det føltes mer naturlig visuelt. Jeg har lagt til en max limit(179.999f) og min limit (0.001f) for FoV verdien.
 
 Når modellen lastes inn, loopes det igjennom alle verticene, og de støreste og minste x/y/z verdiene blir funnet for å kunne definere en "bounding box". Lengden mellom max og min xyz brukes for å skalere modellen slik at den passer inn i den virtuelle spheren som brukes til å rotere modellen (1/distance).
+
+
+-forklare hyperbolic sheet

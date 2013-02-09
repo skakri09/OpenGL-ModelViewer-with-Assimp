@@ -39,6 +39,9 @@
     <ClInclude Include="include\Model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\GameException.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GameManager.cpp">
@@ -55,10 +58,16 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\test.frag">
+    <None Include="shaders\phong.frag">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="shaders\test.vert">
+    <None Include="shaders\phong.vert">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shaders\flat.vert">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shaders\flat.frag">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

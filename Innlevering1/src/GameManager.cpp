@@ -91,8 +91,8 @@ void GameManager::createMatrices()
 
 void GameManager::createSimpleProgram() 
 {
-	std::string fs_src = readFile("shaders/test.frag");
-	std::string vs_src = readFile("shaders/test.vert");
+	std::string fs_src = readFile("shaders/phong.frag");
+	std::string vs_src = readFile("shaders/phong.vert");
 
 	//Compile shaders, attach to program object, and link
 	program.reset(new Program(vs_src, fs_src));
@@ -122,7 +122,6 @@ void GameManager::createVAO()
 	program->setAttributePointer("normal", 3);
 	
 	//Unbind VBOs and VAO
-	vertices->unbind(); //Unbinds both vertices and normals
 	glBindVertexArray(0);
 	CHECK_GL_ERROR();
 }
@@ -163,7 +162,7 @@ void GameManager::renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<Prog
 	
 	glUniform1i(program->getUniform("render_mode"), static_cast<GLint>(mode));
 
-
+	
 	glDrawArrays(GL_TRIANGLES, mesh.first, mesh.count);
 	for (unsigned int i=0; i<mesh.children.size(); ++i)
 		renderMeshRecursive(mesh.children.at(i), program, view_matrix, meshpart_model_matrix, mode);

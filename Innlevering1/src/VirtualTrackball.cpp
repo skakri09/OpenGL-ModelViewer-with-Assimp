@@ -99,7 +99,7 @@ glm::mat4 VirtualTrackball::rotate(int x, int y)
 	point_on_sphere_end = glm::normalize(point_on_sphere_end);
 
 
-	theta = glm::degrees(glm::acos(glm::dot(point_on_sphere_begin, point_on_sphere_end)));
+	theta = glm::degrees(glm::acos(glm::dot(point_on_sphere_begin, point_on_sphere_end)))*2;
 	//theta*= 50;//make the multiplier an adjustable variable
 	quat_new = glm::rotate(quat_old, theta, axis_of_rotation);
 	//std::cout << "Angle: " << theta << std::endl;
@@ -137,21 +137,23 @@ glm::vec3 VirtualTrackball::getClosestPointOnUnitSphere(int x, int y)
 	  * normalized window coordinates
 	  */
 	k = sqrt( static_cast<float>(normalized_coords.x * normalized_coords.x) + static_cast<float>(normalized_coords.y * normalized_coords.y));
-
-//	if(k >= 0.5f)
-	//{
-
-		//point_on_sphere = glm::vec3(normalized_coords.x/k, normalized_coords.y/k, 0.0f);
-		point_on_sphere = glm::vec3(2.0f*normalized_coords.x, 2.0f*normalized_coords.y, (pow(k,2)/2) / (pow(k,2)/2));
-		//std::cout << "outside," << k << std::endl
-	//}
-	//else
-	//{
-	//	point_on_sphere = glm::vec3(2.0f*normalized_coords.x, 2.0f*normalized_coords.y, sqrt(1.0f - ( 4.0f *pow(k, 2.0f))));
-	//	//std::cout << "inside, " << k <<  std::endl;
-	//}
 	
-	//std::cout << "Point on sphere: " << point_on_sphere.x << ", " << point_on_sphere.y << ", " << point_on_sphere.z << std::endl;
+	//if(k <= 0.2f)
+	if(k < 0.125f)
+	{
+		//using the hyperbolic sheet formula described on opengl.org/wiki/trackball
+		point_on_sphere = glm::vec3(normalized_coords.x, normalized_coords.y, sqrt(1.0f - ( 4.0f *pow(k, 2.0f))));
+		//std::cout<<pow(k,2)/2 <<std::endl;
+		std::cout<<"inside"<<std::endl;
+	}
+	else
+	{
+		//using the hyperbolic sheet formula described on opengl.org/wiki/trackball
+		point_on_sphere = glm::vec3(normalized_coords.x, normalized_coords.y, (pow(k,2)/2) / (pow(k,2)/2));
+		//std::cout<<pow(k,2)/2 <<std::endl;
+		std::cout<<"outside"<<std::endl;
+	}
+	
 
 	return point_on_sphere;
 }
