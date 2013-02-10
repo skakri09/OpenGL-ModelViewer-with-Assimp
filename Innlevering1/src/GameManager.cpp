@@ -150,7 +150,7 @@ void GameManager::init()
 }
 
 void GameManager::renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<Program>& program, 
-		const glm::mat4& view_matrix, const glm::mat4& model_matrix, RenderMode mode) 
+		const glm::mat4& view_matrix, const glm::mat4& model_matrix) 
 {
 	//Create modelview matrix
 	glm::mat4 meshpart_model_matrix = model_matrix*mesh.transform;
@@ -161,13 +161,11 @@ void GameManager::renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<Prog
 	//3x3 leading submatrix of the modelview matrix
 	glm::mat3 normal_matrix = glm::transpose(glm::inverse(glm::mat3(modelview_matrix)));
 	glUniformMatrix3fv(program->getUniform("normal_matrix"), 1, 0, glm::value_ptr(normal_matrix));
-	
-	glUniform1i(program->getUniform("render_mode"), static_cast<GLint>(mode));
 
 	
 	glDrawArrays(GL_TRIANGLES, mesh.first, mesh.count);
 	for (unsigned int i=0; i<mesh.children.size(); ++i)
-		renderMeshRecursive(mesh.children.at(i), program, view_matrix, meshpart_model_matrix, mode);
+		renderMeshRecursive(mesh.children.at(i), program, view_matrix, meshpart_model_matrix);
 }
 
 void GameManager::render() 
@@ -200,7 +198,8 @@ void GameManager::render()
 	default:
 		THROW_EXCEPTION("Rendermode not supported");
 	}
-	renderMeshRecursive(model->getMesh(), prog_phong, view_matrix_new, model_matrix, renderMode);
+	glUniformMatrix4fv(prog_phong->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
+	renderMeshRecursive(model->getMesh(), prog_phong, view_matrix_new, model_matrix);
 
 	glBindVertexArray(0);
 	CHECK_GL_ERROR();

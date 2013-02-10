@@ -101,7 +101,7 @@ private:
 	RenderMode renderMode;
 
 	static void renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<GLUtils::Program>& program, 
-									const glm::mat4& modelview, const glm::mat4& transform, RenderMode mode);
+									const glm::mat4& modelview, const glm::mat4& transform);
 
 	void DetermineRenderMode(SDL_Keycode keyCode);
 
