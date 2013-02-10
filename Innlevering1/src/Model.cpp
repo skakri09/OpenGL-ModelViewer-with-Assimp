@@ -43,11 +43,10 @@ Model::Model(std::string filename, bool invert)
 	if (fmod(static_cast<float>(dataSize), 3.0f) < 0.000001f) 
 	{
 		interleavedVBO.reset(new GLUtils::VBO(data.data(), dataSize*sizeof(float)));
-		stride = 6*sizeof(float);//3 for vertices, 3 for normals.
+		stride = 9*sizeof(float);//3 for vertices, 3 for normals.
 		verticeOffset = NULL;
 		normalOffset = (GLvoid*)(3*sizeof(float));
-		
-		//texCoordOffset = (GLvoid*)(6*sizeof(float));
+		texCoordOffset = (GLvoid*)(6*sizeof(float));
 	}
 	else
 		THROW_EXCEPTION("The number of vertices in the mesh is wrong");
@@ -75,11 +74,11 @@ void Model::loadRecursive( MeshPart& part, bool invert, std::vector<float>& data
 
 		//apply_material(scene->mMaterials[mesh->mMaterialIndex]);
 
-		part.first = data.size()/1;
+		part.first = data.size()/9;
 		part.count = mesh->mNumFaces*3;
 
 		//Allocate data
-		data.reserve(data.size() + part.count*6);
+		data.reserve(data.size() + part.count*9);
 
 		bool hasNormals = mesh->HasNormals();
 
@@ -117,6 +116,12 @@ void Model::loadRecursive( MeshPart& part, bool invert, std::vector<float>& data
 					data.push_back(mesh->mTextureCoords[index]->x);
 					data.push_back(mesh->mTextureCoords[index]->y);
 					data.push_back(mesh->mTextureCoords[index]->z);
+				}
+				else
+				{
+					data.push_back(0);
+					data.push_back(0);
+					data.push_back(0);
 				}
 			}
 		}

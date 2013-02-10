@@ -52,6 +52,11 @@ public:
 	 */
 	void render();
 
+	/*
+	* Function to set the path of the model the program should load
+	*/
+	void SetModelToLoad(std::string modelPath);
+
 protected:
 	/**
 	 * Creates the OpenGL context using SDL
@@ -128,6 +133,8 @@ private:
 	SDL_GLContext main_context; //< Our opengl context handle 
 
 	float FoV;
+
+	std::string modelToLoad;
 };
 
 #endif // _GAMEMANAGER_H_

@@ -93,16 +93,6 @@ void GameManager::createSimpleProgram()
 {
 	prog_phong = createProgram("shaders/phong.vert", "shaders/phong.frag");
 	prog_flat = createProgram("shaders/flat.vert", "shaders/flat.frag");
-	//std::string fs_src = readFile("shaders/phong.frag");
-	//std::string vs_src = readFile("shaders/phong.vert");
-
-	////Compile shaders, attach to program object, and link
-	//prog_phong.reset(new Program(vs_src, fs_src));
-
-	////Set uniforms for the program.
-	//prog_phong->use();
-	//glUniformMatrix4fv(prog_phong->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
-	//prog_phong->disuse();
 }
 
 void GameManager::createVAO() 
@@ -111,8 +101,11 @@ void GameManager::createVAO()
 	glBindVertexArray(vao);
 	CHECK_GL_ERROR();
 
-	model.reset(new Model("models/bunny.obj", false));
-	//model->getVertices()->bind();
+	if(modelToLoad.size() > 0)
+		model.reset(new Model(modelToLoad, false));
+	else
+		model.reset(new Model("models/bunny.obj", false));
+
 	model->getInterleavedVBO()->bind();
 	prog_phong->setAttributePointer("position", 3, GL_FLOAT, GL_FALSE, model->getStride(), model->getVerticeOffset());
 	/**
@@ -120,7 +113,6 @@ void GameManager::createVAO()
 	  * i.e., remove the below line, and add the proper normals instead.
 	  */
 
-	//model->getNormals()->bind();
 	prog_phong->setAttributePointer("normal", 3, GL_FLOAT, GL_FALSE, model->getStride(), model->getNormalOffset());
 	
 	//Unbind VBOs and VAO
@@ -179,18 +171,13 @@ void GameManager::render()
 	//Render geometry
 	glBindVertexArray(vao);
 	
-	switch(renderMode)
-	{
+	switch(renderMode){
 	case RENDERMODE_PHONG:
-		prog_phong->use();
-		//renderMeshRecursive(model->getMesh(), prog_phong, view_matrix_new, model_matrix, renderMode);
-		break;
+		prog_phong->use();	break;
 	case RENDERMODE_FLAT:
-		prog_flat->use();
-		//renderMeshRecursive(model->getMesh(), prog_phong, view_matrix_new, model_matrix, renderMode);
-		break;
+		prog_flat->use();	break;
 	case RENDERMODE_WIREFRAME:
-
+			
 		break;
 	case RENDERMODE_HIDDEN_LINE:
 
@@ -198,7 +185,9 @@ void GameManager::render()
 	default:
 		THROW_EXCEPTION("Rendermode not supported");
 	}
+	
 	glUniformMatrix4fv(prog_phong->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
+
 	renderMeshRecursive(model->getMesh(), prog_phong, view_matrix_new, model_matrix);
 
 	glBindVertexArray(0);
@@ -324,4 +313,9 @@ std::shared_ptr<GLUtils::Program> GameManager::createProgram( std::string vs_pat
 	glUniformMatrix4fv(program->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
 	program->disuse();
 	return program;
+}
+
+void GameManager::SetModelToLoad( std::string modelPath )
+{
+	modelToLoad = modelPath;
 }
