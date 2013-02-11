@@ -18,7 +18,12 @@ public:
 		unbind();
 		glDeleteBuffers(1, &vbo_name);
 	}
-
+	inline void bindIndexes(){
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_name);
+	}
+	inline void unbindIndexes(){
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	}
 	inline void bind() {
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_name);
 	}

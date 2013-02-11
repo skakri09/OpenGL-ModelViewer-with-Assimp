@@ -38,6 +38,7 @@ public:
 	inline MeshPart getMesh() {return root;}
 
 	inline std::shared_ptr<GLUtils::VBO> getInterleavedVBO(){return interleavedVBO;}
+	inline std::shared_ptr<GLUtils::VBO> getIndexesVBO(){return indexes;}
 
 	//Returns the stride, use for interleaved VBOs
 	inline GLint getStride(){return stride;}
@@ -52,6 +53,7 @@ private:
 	//used for interleaved VBOs
 	static void loadRecursive(MeshPart& part, bool invert,
 		std::vector<float>& data,
+		std::vector<unsigned int>& indexes,
 		glm::vec3& max_dim, glm::vec3& min_dim,
 		const aiScene* scene, const aiNode* node);
 
@@ -62,8 +64,8 @@ private:
 	const aiScene* scene;
 	MeshPart root;
 
-	std::shared_ptr<GLUtils::VBO> interleavedVBO;
-
+	std::shared_ptr<GLUtils::VBO> interleavedVBO, indexes;
+	
 	glm::vec3 min_dim;
 	glm::vec3 max_dim;
 

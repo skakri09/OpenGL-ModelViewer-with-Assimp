@@ -120,6 +120,7 @@ void GameManager::LoadModel( std::string fullFilePath )
 		model.reset(new Model(fullFilePath, false));
 
 	model->getInterleavedVBO()->bind();
+	model->getIndexesVBO()->bindIndexes();
 	oldRenderMode = NONE;
 
 	//Unbind VBOs and VAO
@@ -165,7 +166,10 @@ void GameManager::renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<Prog
 		glUniformMatrix3fv(program->getUniform("normal_matrix"), 1, 0, glm::value_ptr(normal_matrix));
 	}
 	
-	glDrawArrays(GL_TRIANGLES, mesh.first, mesh.count);
+	//glDrawArrays(GL_TRIANGLES, mesh.first, mesh.count);
+	
+	glDrawElements(GL_TRIANGLES, mesh.count, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * mesh.first));
+
 	for (unsigned int i=0; i<mesh.children.size(); ++i)
 		renderMeshRecursive(mesh.children.at(i), program, view_matrix, meshpart_model_matrix, mode);
 }
@@ -179,7 +183,6 @@ void GameManager::render()
 
 	//Render geometry
 	glBindVertexArray(vao);
-
 	current_program->use();
 	UpdateAttripPtrs();
 
@@ -256,7 +259,12 @@ void GameManager::quit()
 
 void GameManager::ZoomIn()
 {
-	FoV -= 5.0f;
+	if(FoV > 10.0f)
+		FoV -= 5.0f;
+	else if(FoV > 3.0f)
+		FoV -= 1.0f;
+	else FoV -= 0.1f;
+	
 	if(FoV < 0.0001f)
 		FoV = 0.0001f;
 
@@ -266,7 +274,12 @@ void GameManager::ZoomIn()
 
 void GameManager::ZoomOut()
 {
-	FoV += 5.0f;
+	if(FoV > 10.0f)
+		FoV += 5.0f;
+	else if(FoV > 3.0f)
+		FoV += 1.0f;
+	else FoV += 0.1f;
+
 	if(FoV > 179.999f)
 		FoV = 179.999f;
 
