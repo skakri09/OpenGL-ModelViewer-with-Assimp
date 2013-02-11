@@ -42,6 +42,9 @@
     <ClInclude Include="include\GameException.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\FileHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GameManager.cpp">
@@ -56,6 +59,9 @@
     <ClCompile Include="src\Model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\FileHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\phong.frag">
@@ -68,6 +74,18 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="shaders\flat.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shaders\hidden_line.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shaders\hidden_line.vert">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shaders\wireframe.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shaders\wireframe.vert">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

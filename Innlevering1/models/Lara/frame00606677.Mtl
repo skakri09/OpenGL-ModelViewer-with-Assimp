@@ -1,0 +1,72 @@
+newmtl Texture_0
+Ks 0.25
+Ns 499.000000
+d 1.000000
+illum 2
+map_Kd frame006066770.png
+map_Kn frame006066770n.png
+
+newmtl Texture_0_1
+Ks 0.25
+Ns 499.000000
+d 1.000000
+illum 2
+map_Kd frame006066770.png
+map_Kn frame006066770n.png
+
+newmtl Texture_0_2
+Ks 0.25
+Ns 499.000000
+d 1.000000
+illum 2
+map_Kd frame006066770.png
+map_Kn frame006066770n.png
+
+newmtl Texture_0_3
+Ks 0.25
+Ns 499.000000
+d 1.000000
+illum 2
+map_Kd frame006066770.png
+map_Kn frame006066770n.png
+
+newmtl Texture_0_4
+Ks 0.25
+Ns 499.000000
+d 1.000000
+illum 2
+map_Kd frame006066770.png
+map_Kn frame006066770n.png
+
+newmtl Texture_0_5
+Ks 0.25
+Ns 499.000000
+d 1.000000
+illum 2
+map_Kd frame006066770.png
+map_Kn frame006066770n.png
+
+newmtl Texture_0_6
+Ks 0.25
+Ns 499.000000
+d 1.000000
+illum 2
+map_Kd frame006066770.png
+map_Kn frame006066770n.png
+
+newmtl Texture_0_7
+Ks 0.25
+Ns 499.000000
+d 1.000000
+illum 2
+map_Kd frame006066770.png
+map_Kn frame006066770n.png
+
+newmtl Texture_0_8
+Ks 0.25
+Ns 499.000000
+d 1.000000
+illum 2
+map_Kd frame006066770.png
+map_Kn frame006066770n.png
+

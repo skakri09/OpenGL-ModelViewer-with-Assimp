@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\FileHandler.h" />
     <ClInclude Include="include\GameException.h" />
     <ClInclude Include="include\GameManager.h" />
     <ClInclude Include="include\GLUtils\GLUtils.hpp" />
@@ -21,6 +22,7 @@
     <ClInclude Include="include\VirtualTrackball.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\FileHandler.cpp" />
     <ClCompile Include="src\GameManager.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Model.cpp" />
@@ -29,8 +31,12 @@
   <ItemGroup>
     <None Include="shaders\flat.frag" />
     <None Include="shaders\flat.vert" />
+    <None Include="shaders\hidden_line.frag" />
+    <None Include="shaders\hidden_line.vert" />
     <None Include="shaders\phong.frag" />
     <None Include="shaders\phong.vert" />
+    <None Include="shaders\wireframe.frag" />
+    <None Include="shaders\wireframe.vert" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{0EB6082A-7B48-4E60-B4B3-2EB3C7254AC1}</ProjectGuid>

@@ -12,11 +12,14 @@
 #include "Model.h"
 #include "VirtualTrackball.h"
 
+#include "FileHandler.h"
+
 /**
  * This class handles the game logic and display.
  * Uses SDL as the display manager, and glm for 
  * vector and matrix computations
  */
+class FileHandler;
 class GameManager 
 {
 public:
@@ -57,7 +60,13 @@ public:
 	*/
 	void SetModelToLoad(std::string modelPath);
 
+	/*
+	* Loads a new model
+	*/
+	void LoadModel(std::string fullFilePath);
+
 protected:
+
 	/**
 	 * Creates the OpenGL context using SDL
 	 */
@@ -100,21 +109,27 @@ private:
 		RENDERMODE_PHONG,
 		RENDERMODE_FLAT,
 		RENDERMODE_WIREFRAME,
-		RENDERMODE_HIDDEN_LINE
+		RENDERMODE_HIDDEN_LINE,
+		NONE
 	};
 
-	RenderMode renderMode;
+	RenderMode renderMode, oldRenderMode;
 
 	static void renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<GLUtils::Program>& program, 
-									const glm::mat4& modelview, const glm::mat4& transform);
+									const glm::mat4& modelview, const glm::mat4& transform, RenderMode mode);
 
 	void DetermineRenderMode(SDL_Keycode keyCode);
+
+	void UpdateAttripPtrs();
 
 	GLuint vao; //< Vertex array object
 	
 	//GLuint program; //< OpenGL shader program
+	std::shared_ptr<GLUtils::Program> current_program;
 	std::shared_ptr<GLUtils::Program> prog_phong;
 	std::shared_ptr<GLUtils::Program> prog_flat;
+	std::shared_ptr<GLUtils::Program> prog_wireframe;
+	std::shared_ptr<GLUtils::Program> prog_hiddenLine;
 
 	std::shared_ptr<GLUtils::Program> createProgram(std::string vs_path, std::string fs_Path);
 
@@ -135,6 +150,9 @@ private:
 	float FoV;
 
 	std::string modelToLoad;
+
+	std::shared_ptr<FileHandler> fileHandler;
+
 };
 
 #endif // _GAMEMANAGER_H_

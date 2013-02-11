@@ -30,12 +30,13 @@ Model::Model(std::string filename, bool invert)
 	std::cout << "max x: " << max_dim.x << " max y: " << max_dim.y << " max z: " << max_dim.z << std::endl;
 
 	float diameter = glm::distance(min_dim, max_dim);
+	glm::vec3 center = min_dim - max_dim;
 	std::cout << "diameter = " << diameter << std::endl;
-
+	std::cout << "center x = " << center.x << " y = " << center.y << " z = " << center.z << std::endl;
 	//Set the transformation matrix for the root node
 	//the scale given by 1.0f/diameter scales the model to fit within the unit sphere
 	root.transform = glm::scale(root.transform, glm::vec3(1.0f/diameter));
-	root.transform = glm::translate(root.transform, glm::vec3(0.016800813, -0.11015295, 0.0014822669));
+	root.transform = glm::translate(root.transform, center);
 
 	dataSize = data.size();
 
@@ -75,10 +76,10 @@ void Model::loadRecursive( MeshPart& part, bool invert, std::vector<float>& data
 		//apply_material(scene->mMaterials[mesh->mMaterialIndex]);
 
 		part.first = data.size()/9;
-		part.count = mesh->mNumFaces*3;
+		part.count = mesh->mNumFaces*9;
 
 		//Allocate data
-		data.reserve(data.size() + part.count*9);
+		data.reserve(data.size() + part.count*3);
 
 		bool hasNormals = mesh->HasNormals();
 
@@ -111,11 +112,11 @@ void Model::loadRecursive( MeshPart& part, bool invert, std::vector<float>& data
 					data.push_back(mesh->mNormals[index].z);
 				}
 				
-				if(mesh->HasTextureCoords(index))
+				if(mesh->HasTextureCoords(0))
 				{
-					data.push_back(mesh->mTextureCoords[index]->x);
-					data.push_back(mesh->mTextureCoords[index]->y);
-					data.push_back(mesh->mTextureCoords[index]->z);
+					data.push_back(mesh->mTextureCoords[0][index].x);
+					data.push_back(mesh->mTextureCoords[0][index].y);
+					data.push_back(mesh->mTextureCoords[0][index].z);
 				}
 				else
 				{

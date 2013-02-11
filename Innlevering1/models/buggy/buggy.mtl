@@ -1,0 +1,17 @@
+# 3ds Max Wavefront OBJ Exporter v0.97b - (c)2007 guruware
+# File Created: 11.02.2013 15:16:21
+
+newmtl buggy
+	Ns 80.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.3922 0.3922 0.3922
+	Kd 0.3922 0.3922 0.3922
+	Ks 0.4450 0.4450 0.4450
+	Ke 0.0000 0.0000 0.0000
+	map_Ka C:\PG612\PG612-Innlevering1\Innlevering1\models\buggy\buggy_diff.tga
+	map_Kd C:\PG612\PG612-Innlevering1\Innlevering1\models\buggy\buggy_diff.tga
+	map_bump Map__1_Normal_Bump.bmp

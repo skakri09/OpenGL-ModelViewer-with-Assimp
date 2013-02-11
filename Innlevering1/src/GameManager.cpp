@@ -93,32 +93,40 @@ void GameManager::createSimpleProgram()
 {
 	prog_phong = createProgram("shaders/phong.vert", "shaders/phong.frag");
 	prog_flat = createProgram("shaders/flat.vert", "shaders/flat.frag");
+	prog_wireframe = createProgram("shaders/wireframe.vert", "shaders/wireframe.frag");
+	prog_hiddenLine = createProgram("shaders/hidden_line.vert", "shaders/hidden_line.frag");
+
+	renderMode = RENDERMODE_PHONG;
+	oldRenderMode = NONE;
+	current_program = prog_phong;	
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void GameManager::createVAO() 
 {
+	if(modelToLoad.size() > 0)
+		LoadModel(modelToLoad);
+	else
+		LoadModel("models/bunny.obj");
+}
+
+
+void GameManager::LoadModel( std::string fullFilePath )
+{
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
-	CHECK_GL_ERROR();
 
 	if(modelToLoad.size() > 0)
-		model.reset(new Model(modelToLoad, false));
-	else
-		model.reset(new Model("models/bunny.obj", false));
+		model.reset(new Model(fullFilePath, false));
 
 	model->getInterleavedVBO()->bind();
-	prog_phong->setAttributePointer("position", 3, GL_FLOAT, GL_FALSE, model->getStride(), model->getVerticeOffset());
-	/**
-	  * Add normals to shader here, when you have loaded from file
-	  * i.e., remove the below line, and add the proper normals instead.
-	  */
+	oldRenderMode = NONE;
 
-	prog_phong->setAttributePointer("normal", 3, GL_FLOAT, GL_FALSE, model->getStride(), model->getNormalOffset());
-	
 	//Unbind VBOs and VAO
 	glBindVertexArray(0);
 	CHECK_GL_ERROR();
 }
+
 
 void GameManager::init() 
 {
@@ -130,19 +138,19 @@ void GameManager::init()
 		THROW_EXCEPTION(err.str());
 	}
 	atexit( SDL_Quit);
-
-	renderMode = RENDERMODE_PHONG;
 	
 	createOpenGLContext();
 	setOpenGLStates();
 	createMatrices();
 	createSimpleProgram();
 	createVAO();
-	
+	fileHandler.reset(new FileHandler());
+	fileHandler->DisplayHelp();
+	fileHandler->InitFileHandler("models", this);
 }
 
 void GameManager::renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<Program>& program, 
-		const glm::mat4& view_matrix, const glm::mat4& model_matrix) 
+		const glm::mat4& view_matrix, const glm::mat4& model_matrix, RenderMode mode) 
 {
 	//Create modelview matrix
 	glm::mat4 meshpart_model_matrix = model_matrix*mesh.transform;
@@ -151,45 +159,35 @@ void GameManager::renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<Prog
 
 	//Create normal matrix, the transpose of the inverse
 	//3x3 leading submatrix of the modelview matrix
-	glm::mat3 normal_matrix = glm::transpose(glm::inverse(glm::mat3(modelview_matrix)));
-	glUniformMatrix3fv(program->getUniform("normal_matrix"), 1, 0, glm::value_ptr(normal_matrix));
-
+	if(mode == RENDERMODE_PHONG || mode == RENDERMODE_FLAT)
+	{
+		glm::mat3 normal_matrix = glm::transpose(glm::inverse(glm::mat3(modelview_matrix)));
+		glUniformMatrix3fv(program->getUniform("normal_matrix"), 1, 0, glm::value_ptr(normal_matrix));
+	}
 	
 	glDrawArrays(GL_TRIANGLES, mesh.first, mesh.count);
 	for (unsigned int i=0; i<mesh.children.size(); ++i)
-		renderMeshRecursive(mesh.children.at(i), program, view_matrix, meshpart_model_matrix);
+		renderMeshRecursive(mesh.children.at(i), program, view_matrix, meshpart_model_matrix, mode);
 }
 
 void GameManager::render() 
 {
 	//Clear screen, and set the correct program
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-	
+
 	glm::mat4 view_matrix_new = view_matrix*trackball_view_matrix;
 
 	//Render geometry
 	glBindVertexArray(vao);
+
+	current_program->use();
+	UpdateAttripPtrs();
+
+	glUniformMatrix4fv(current_program->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
 	
-	switch(renderMode){
-	case RENDERMODE_PHONG:
-		prog_phong->use();	break;
-	case RENDERMODE_FLAT:
-		prog_flat->use();	break;
-	case RENDERMODE_WIREFRAME:
-			
-		break;
-	case RENDERMODE_HIDDEN_LINE:
+	renderMeshRecursive(model->getMesh(), current_program, view_matrix_new, model_matrix, renderMode);
 
-		break;
-	default:
-		THROW_EXCEPTION("Rendermode not supported");
-	}
-	
-	glUniformMatrix4fv(prog_phong->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
-
-	renderMeshRecursive(model->getMesh(), prog_phong, view_matrix_new, model_matrix);
-
+	current_program->disuse();
 	glBindVertexArray(0);
 	CHECK_GL_ERROR();
 }
@@ -201,6 +199,7 @@ void GameManager::play()
 	//SDL main loop
 	while (!doExit) 
 	{
+		bool hasBeenInConsoleMode = false;
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) 
 		{// poll for pending events
@@ -222,19 +221,20 @@ void GameManager::play()
 				trackball_view_matrix = trackball.rotate(event.motion.x, event.motion.y);
 				break;
 			case SDL_KEYDOWN:
+				if(event.key.keysym.sym == SDLK_RETURN && !hasBeenInConsoleMode)
+				{
+					hasBeenInConsoleMode = true;
+					fileHandler->EnterConsoleMode();
+				}
 				if (event.key.keysym.sym == SDLK_ESCAPE) //Esc
 					doExit = true;
 				if (event.key.keysym.sym == SDLK_q
 						&& event.key.keysym.mod & KMOD_CTRL) //Ctrl+q
 					doExit = true;
 				if(event.key.keysym.sym == SDLK_PAGEUP)
-				{
 					ZoomIn();
-				}
 				if(event.key.keysym.sym == SDLK_PAGEDOWN)
-				{
 					ZoomOut();
-				}
 				DetermineRenderMode(event.key.keysym.sym);
 				break;
 			case SDL_QUIT: //e.g., user clicks the upper right x
@@ -242,7 +242,6 @@ void GameManager::play()
 				break;
 			}
 		}
-
 		//Render, and swap front and back buffers
 		render();
 		SDL_GL_SwapWindow(main_window);
@@ -262,8 +261,6 @@ void GameManager::ZoomIn()
 		FoV = 0.0001f;
 
 	projection_matrix = glm::perspective(FoV,	window_width / (float) window_height, 1.0f, 10.f);
-	glUniformMatrix4fv(prog_phong->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
-
 	std::cout << "FoV: " << FoV << std::endl;
 }
 
@@ -274,29 +271,35 @@ void GameManager::ZoomOut()
 		FoV = 179.999f;
 
 	projection_matrix = glm::perspective(FoV,	window_width / (float) window_height, 1.0f, 10.f);
-	glUniformMatrix4fv(prog_phong->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
-
 	std::cout << "FoV: " << FoV << std::endl;
 }
 
 void GameManager::DetermineRenderMode(SDL_Keycode keyCode)
 {
+	RenderMode currentRendermode = renderMode;
 	//Phong shading
-	if(keyCode == SDLK_1)
+	switch(keyCode)
+	{
+	case SDLK_1:
 		renderMode = RENDERMODE_PHONG;
-
-	//Flat Shading
-	else if(keyCode == SDLK_2)
+		current_program = prog_phong;
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		break;
+	case SDLK_2:
 		renderMode = RENDERMODE_FLAT;
-
-	//wireframe
-	else if(keyCode == SDLK_3)
+		current_program = prog_flat;
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		break;
+	case SDLK_3:
 		renderMode = RENDERMODE_WIREFRAME;
-
-	//hidden line
-	else if(keyCode == SDLK_4)
+		current_program = prog_wireframe;
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		break;
+	case SDLK_4:
 		renderMode = RENDERMODE_HIDDEN_LINE;
-	
+		current_program = prog_hiddenLine;
+		break;
+	}
 }
 
 std::shared_ptr<GLUtils::Program> GameManager::createProgram( std::string vs_path, std::string fs_Path)
@@ -319,3 +322,17 @@ void GameManager::SetModelToLoad( std::string modelPath )
 {
 	modelToLoad = modelPath;
 }
+
+void GameManager::UpdateAttripPtrs()
+{
+	if(oldRenderMode != renderMode)
+	{
+		oldRenderMode = renderMode;
+		current_program->setAttributePointer("position", 3, GL_FLOAT, GL_FALSE, model->getStride(), model->getVerticeOffset());
+
+		if(renderMode == RENDERMODE_PHONG || renderMode == RENDERMODE_FLAT)
+			current_program->setAttributePointer("normal", 3, GL_FLOAT, GL_FALSE, model->getStride(), model->getNormalOffset());
+	}
+}
+
+

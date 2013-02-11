@@ -137,23 +137,41 @@ glm::vec3 VirtualTrackball::getClosestPointOnUnitSphere(int x, int y)
 	  * normalized window coordinates
 	  */
 	k = sqrt( static_cast<float>(normalized_coords.x * normalized_coords.x) + static_cast<float>(normalized_coords.y * normalized_coords.y));
-	
-	//if(k <= 0.2f)
-	if(k < 0.125f)
-	{
-		//using the hyperbolic sheet formula described on opengl.org/wiki/trackball
-		point_on_sphere = glm::vec3(normalized_coords.x, normalized_coords.y, sqrt(1.0f - ( 4.0f *pow(k, 2.0f))));
-		//std::cout<<pow(k,2)/2 <<std::endl;
-		std::cout<<"inside"<<std::endl;
+	//
+	////if(k <= 0.2f)
+	//if(k < 0.125f)
+	//{
+	//	//using the hyperbolic sheet formula described on opengl.org/wiki/trackball
+	//	//point_on_sphere = glm::vec3(2*normalized_coords.x, 2*normalized_coords.y, sqrt(1.0f - ( 4.0f *pow(k, 2.0f))));
+	//	glm::vec3(2*normalized_coords.x, 2*normalized_coords.y, 0.125f);
+	//	//std::cout<<pow(k,2)/2 <<std::endl;
+
+	//}
+	//else
+	//{
+
+	//	point_on_sphere = glm::vec3( normalized_coords.x / k, normalized_coords.y / k, 0.125f/k);
+	//	//using the hyperbolic sheet formula described on opengl.org/wiki/trackball
+	//	/*point_on_sphere = glm::vec3(normalized_coords.x, normalized_coords.y, 
+	//					(pow(0.5f,2)/2) / (sqrt(pow)normalized_coords.x)/2));*/
+	//	//std::cout<<pow(k,2)/2 <<std::endl;
+	//	//std::cout<<(pow(k,2)/2) / (pow(k,2)/2)<<std::endl;
+	//}
+
+	k = sqrt(static_cast<float>((normalized_coords.x * normalized_coords.x) + (normalized_coords.y * normalized_coords.y)));
+	float r = 0.8f;
+
+	float te = (pow(r,2) / 2) / k;
+	float te2 = pow(r, 2) / 2;
+
+	if (k > (pow(normalized_coords.x, 2) + pow(normalized_coords.x, 2) )){
+
+		point_on_sphere = glm::vec3( normalized_coords.x / k, normalized_coords.y / k, te);
 	}
-	else
-	{
-		//using the hyperbolic sheet formula described on opengl.org/wiki/trackball
-		point_on_sphere = glm::vec3(normalized_coords.x, normalized_coords.y, (pow(k,2)/2) / (pow(k,2)/2));
-		//std::cout<<pow(k,2)/2 <<std::endl;
-		std::cout<<"outside"<<std::endl;
+	//Mouse is inside of circle
+	else{
+		point_on_sphere = glm::vec3( 2.0f * normalized_coords.x, 2.0f * normalized_coords.y, te2);
 	}
-	
 
 	return point_on_sphere;
 }
