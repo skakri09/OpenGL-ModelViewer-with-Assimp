@@ -15,7 +15,9 @@ int main(int argc, char *argv[])
 	std::shared_ptr<GameManager> game;
 
 	game.reset(new GameManager());
-	game->SetModelToLoad(argv[1]);
+	if(argv[1] != NULL)
+		game->SetModelToLoad(argv[1]);
+	else THROW_EXCEPTION("No argv[1]");
 	game->init();
 	game->play();
 	game.reset();
