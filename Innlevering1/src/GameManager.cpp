@@ -78,7 +78,8 @@ void GameManager::setOpenGLStates()
 	glDepthFunc(GL_LEQUAL);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
-	glClearColor(0.0, 0.0, 0.5, 1.0);
+	backgroundColor = glm::vec4(0.0, 0.0, 0.5, 1.0);
+	glClearColor(backgroundColor.x, backgroundColor.y, backgroundColor.z, backgroundColor.w);
 }
 
 void GameManager::createMatrices() 
@@ -110,7 +111,6 @@ void GameManager::createVAO()
 		LoadModel("models/bunny.obj");
 }
 
-
 void GameManager::LoadModel( std::string fullFilePath )
 {
 	glGenVertexArrays(1, &vao);
@@ -127,7 +127,6 @@ void GameManager::LoadModel( std::string fullFilePath )
 	glBindVertexArray(0);
 	CHECK_GL_ERROR();
 }
-
 
 void GameManager::init() 
 {
@@ -166,8 +165,7 @@ void GameManager::renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<Prog
 		glUniformMatrix3fv(program->getUniform("normal_matrix"), 1, 0, glm::value_ptr(normal_matrix));
 	}
 	
-	//glDrawArrays(GL_TRIANGLES, mesh.first, mesh.count);
-	
+	//Drawing with indices, thus using drawElements instead of drawArrays
 	glDrawElements(GL_TRIANGLES, mesh.count, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * mesh.first));
 
 	for (unsigned int i=0; i<mesh.children.size(); ++i)
@@ -188,7 +186,25 @@ void GameManager::render()
 
 	glUniformMatrix4fv(current_program->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
 	
+	if(renderMode == RENDERMODE_HIDDEN_LINE)
+	{
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glEnable (GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(1.0f, 4.4f);
+		glUniform4fv(current_program->getUniform("rendering_color"), 1, glm::value_ptr(backgroundColor));
+	}
 	renderMeshRecursive(model->getMesh(), current_program, view_matrix_new, model_matrix, renderMode);
+	if(renderMode == RENDERMODE_HIDDEN_LINE)
+	{
+		glDisable(GL_POLYGON_OFFSET_FILL);
+
+		glUniform4fv(current_program->getUniform("rendering_color"), 1, glm::value_ptr(glm::vec4(1.0f, 0.6f, 0.1f, 1.0f)));
+		glEnable (GL_POLYGON_OFFSET_LINE);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glPolygonOffset(0.0f, 0.0f);
+		renderMeshRecursive(model->getMesh(), current_program, view_matrix_new, model_matrix, renderMode);
+		glDisable(GL_POLYGON_OFFSET_LINE);
+	}
 
 	current_program->disuse();
 	glBindVertexArray(0);
@@ -198,11 +214,11 @@ void GameManager::render()
 void GameManager::play() 
 {
 	bool doExit = false;
-
 	//SDL main loop
 	while (!doExit) 
 	{
 		bool hasBeenInConsoleMode = false;
+		
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) 
 		{// poll for pending events
@@ -221,7 +237,7 @@ void GameManager::play()
 				trackball.rotateEnd(event.motion.x, event.motion.y);
 				break;
 			case SDL_MOUSEMOTION:
-				trackball_view_matrix = trackball.rotate(event.motion.x, event.motion.y);
+				trackball_view_matrix = trackball.rotate(event.motion.x, event.motion.y, 2.0f);
 				break;
 			case SDL_KEYDOWN:
 				if(event.key.keysym.sym == SDLK_RETURN && !hasBeenInConsoleMode)
@@ -240,7 +256,7 @@ void GameManager::play()
 					ZoomOut();
 				DetermineRenderMode(event.key.keysym.sym);
 				break;
-			case SDL_QUIT: //e.g., user clicks the upper right x
+			case SDL_QUIT: //e.g., user clicks the upper right x	
 				doExit = true;
 				break;
 			}

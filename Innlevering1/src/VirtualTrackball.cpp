@@ -77,7 +77,7 @@ void VirtualTrackball::rotateEnd(int x, int y)
 	quat_old = quat_new;
 }
 
-glm::mat4 VirtualTrackball::rotate(int x, int y) 
+glm::mat4 VirtualTrackball::rotate(int x, int y, float rotSpeed) 
 {
 	//If not rotating, simply return the old rotation matrix
 	if (!rotating) return quatToMat4(quat_old);
@@ -92,18 +92,20 @@ glm::mat4 VirtualTrackball::rotate(int x, int y)
 	  * Find axis of rotation and angle here. Construct the
 	  * rotation quaternion using glm helper functions
 	  */
-	
-	axis_of_rotation = glm::cross(point_on_sphere_end, point_on_sphere_begin);
-	
+
 	point_on_sphere_begin = glm::normalize(point_on_sphere_begin);
 	point_on_sphere_end = glm::normalize(point_on_sphere_end);
 
+	//The axis of rotation that we rotate arround is found by the cross product between
+	//the end and begin point on the sphere.
+	axis_of_rotation = glm::cross(point_on_sphere_end, point_on_sphere_begin);
+	
+	//Finding the amount of degrees to rotate by taking dot product between the two points we have on the sphere.
+	//Muptiplying with a rotationSpeed constant to fit the speed of the rotation better to my liking.
+	theta = glm::degrees(glm::acos(glm::dot(point_on_sphere_begin, point_on_sphere_end)))*rotSpeed;
 
-	theta = glm::degrees(glm::acos(glm::dot(point_on_sphere_begin, point_on_sphere_end)))*5;
-	//theta*= 50;//make the multiplier an adjustable variable
+	//Constructing the new quaternion using the old quat, and our newly found degrees and axis of rotation.
 	quat_new = glm::rotate(quat_old, theta, axis_of_rotation);
-	//std::cout << "Angle: " << theta << std::endl;
-	//std::cout << "Axis: " << axis_of_rotation.x << " " << axis_of_rotation.y << " " << axis_of_rotation.z << std::endl;
 
 	return quatToMat4(quat_new);
 }
@@ -119,8 +121,6 @@ glm::vec2 VirtualTrackball::getNormalizedWindowCoordinates(int x, int y)
 	glm::vec2 coord = glm::vec2(x / static_cast<float>(w) - 0.5f, 
 		0.5f - static_cast<float>(y) / h);
 
-	//std::cout << "Normalized coordinates: " << coord.x << ", " << coord.y << std::endl;
-
 	return coord;
 }
 
@@ -128,7 +128,7 @@ glm::vec3 VirtualTrackball::getClosestPointOnUnitSphere(int x, int y)
 {
 	glm::vec2 normalized_coords;
 	glm::vec3 point_on_sphere;
-	float k;
+	float k;//< The distance from the center of the sphere, to the point of click-intersection.
 
 	normalized_coords = getNormalizedWindowCoordinates(x, y);
 	
@@ -136,7 +136,7 @@ glm::vec3 VirtualTrackball::getClosestPointOnUnitSphere(int x, int y)
 	  * Find the point on the unit sphere here from the
 	  * normalized window coordinates
 	  */
-	k = sqrt( static_cast<float>(normalized_coords.x * normalized_coords.x) + static_cast<float>(normalized_coords.y * normalized_coords.y));
+	//k = sqrt( static_cast<float>(normalized_coords.x * normalized_coords.x) + static_cast<float>(normalized_coords.y * normalized_coords.y));
 	//
 	////if(k <= 0.2f)
 	//if(k < 0.125f)
@@ -164,14 +164,11 @@ glm::vec3 VirtualTrackball::getClosestPointOnUnitSphere(int x, int y)
 	float te = (pow(r,2) / 2) / k;
 	float te2 = pow(r, 2) / 2;
 
-	if (k > (pow(normalized_coords.x, 2) + pow(normalized_coords.x, 2) )){
-
+	//Mouse is on the hyperbolic sheet
+	if (k > (pow(normalized_coords.x, 2) + pow(normalized_coords.x, 2) ))
 		point_on_sphere = glm::vec3( normalized_coords.x / k, normalized_coords.y / k, te);
-	}
-	//Mouse is inside of circle
-	else{
+	else//Mouse is inside the sphere
 		point_on_sphere = glm::vec3( 2.0f * normalized_coords.x, 2.0f * normalized_coords.y, te2);
-	}
 
 	return point_on_sphere;
 }

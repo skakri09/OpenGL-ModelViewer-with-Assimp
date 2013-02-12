@@ -32,25 +32,41 @@ void FileHandler::DisplayDirContent()
 {
 	std::cout << "Directory content: " << std::endl;
 	directory_iterator end;
-	for(directory_iterator iter(curDir); iter != end; ++iter)
+
+	//Wrapping the displaying of content in a try block, just in case
+	//some bad person were to have deleted our directory while we were 
+	//here playing with the model viewer
+	try
 	{
-		path p = *iter;
-		if(is_regular_file(*iter))
+		if(exists(curDir))
 		{
-			float size = static_cast<float>(file_size(*iter));
-			size /= 1000.0f;
-			if(size > 1000.0f)
+			//Looping trough the contents of the current directory
+			for(directory_iterator iter(curDir); iter != end; ++iter)
 			{
-				size /= 1000;
-				std::cout << p.string() << "\t\t" << size << "MB" << std::endl;
+				path p = *iter;
+				//If what the iterator points to is a regular file, it's name 
+				//and file size is written to console
+				if(is_regular_file(*iter))
+				{
+					float size = static_cast<float>(file_size(*iter));
+					size /= 1000.0f;
+					if(size > 1000.0f)
+					{
+						size /= 1000;
+						std::cout << p.string() << "\t\t" << size << "MB" << std::endl;
+					}
+					else
+						std::cout << p.string() << "\t\t" << size << "KB" << std::endl;
+				}
+				//If the iterator points to a sub-directory, the folder name is written to console
+				else if(is_directory(*iter))
+					std::cout << p.string() << "\\" << "\t\t" << "folder" << std::endl;
 			}
-			else
-				std::cout << p.string() << "\t\t" << size << "KB" << std::endl;
 		}
-		else if(is_directory(*iter))
-		{
-			std::cout << p.string() << "\\" << "\t\t" << "folder" << std::endl;
-		}
+	}
+	catch (const filesystem_error& ex)
+	{
+		std::cout << ex.what() << std::endl;
 	}
 }
 
@@ -59,28 +75,22 @@ void FileHandler::InitFileHandler( std::string dirPath, GameManager* gameManager
 	this->gameManager = gameManager;
 	this->curDir = this->baseDir = dirPath;
 
-	//The following try-block is part of a boost::filesystem example.
 	try
 	{
-		if (exists(dirPath))    // does p actually exist?
+		//Confirmin that the path is an actual path, and writing it's content if it is.
+		if (exists(dirPath))
 		{
-			if (is_regular_file(dirPath))        // is p a regular file?
-				std::cout << dirPath << " size is " << file_size(dirPath) << '\n';
-
-			else if (is_directory(dirPath))      // is p a directory?
-			{
+			if (is_directory(dirPath))
 				DisplayDirContent();
-			}
 			else
-				std::cout << dirPath << " exists, but is neither a regular file nor a directory\n";
+				std::cout << dirPath << " is no directory.";
 		}
 		else
 			std::cout << dirPath << " does not exist\n";
 	}
-
 	catch (const filesystem_error& ex)
 	{
-		std::cout << ex.what() << '\n';
+		std::cout << ex.what() << std::endl;
 	}
 }
 
@@ -88,6 +98,9 @@ void FileHandler::EnterConsoleMode()
 {
 	std::cout << "\n\nEntered console-mode. Enter a command, or type 'help'." << std::endl;
 	bool consoleMode = true;
+
+	//Processing input from the console while consoleMode is true.
+	//This will be the case until exit is typed by user, or a model is loaded.
 	while(consoleMode)
 	{
 		std::cout << "\\>";
@@ -101,8 +114,6 @@ void FileHandler::EnterConsoleMode()
 		consoleMode = !ProcessInput(input);
 		std::cout << std::endl;
 	}
-	
-
 	std::cout << "\n\nExited console-mode. You may resume using the model viewer." << std::endl;
 }
 
@@ -114,6 +125,9 @@ bool FileHandler::ProcessInput( std::string input )
 		return false;
 	}
 	
+	//If input matches 'load', followed by something, we try to use the following part
+	//as a filename in the current directory. If it's a name of a file in the directory,
+	//we tell the gameManager to load the file.
 	std::string loadMatch = input.substr(0, 5);
 	if(loadMatch == "load ")
 	{
@@ -132,6 +146,7 @@ bool FileHandler::ProcessInput( std::string input )
 		}
 	}
 
+	//if input matched 'cd' we try to move out one directory
 	if(input == "cd")
 	{
 		if(curDir == baseDir)
@@ -143,6 +158,8 @@ bool FileHandler::ProcessInput( std::string input )
 		}
 		return false;
 	}
+	//<if input matches 'cd', followed by something else, we try to use the following part
+	//as a new directory path. If it's a successful path, we enter the new directory.
 	else if(input.substr(0, 3) == "cd ")
 	{
 		std::string dirName = input.substr(3, input.size()-3);

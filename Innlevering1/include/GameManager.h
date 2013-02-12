@@ -19,7 +19,9 @@
  * Uses SDL as the display manager, and glm for 
  * vector and matrix computations
  */
-class FileHandler;
+
+class FileHandler;//<forward declaration for FileHandler class
+
 class GameManager 
 {
 public:
@@ -151,8 +153,10 @@ private:
 
 	std::string modelToLoad;
 
+	//the FileHandler object handles input for file loading from the console window
 	std::shared_ptr<FileHandler> fileHandler;
 
+	glm::vec4 backgroundColor;//<the color openGL clears the background with each update
 };
 
 #endif // _GAMEMANAGER_H_

@@ -33,7 +33,7 @@ public:
 	  * Does nothing if we have not called rotateBegin first.
 	  * @return the view matrix representing the rotation
 	  */
-	glm::mat4 rotate(int x, int y);
+	glm::mat4 rotate(int x, int y, float rotSpeed);
 
 	/**
 	  * Sets the window size. This is important to be able to 

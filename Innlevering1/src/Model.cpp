@@ -7,6 +7,7 @@
 
 Model::Model(std::string filename, bool invert) 
 {
+	this->fileName = filename;
 	std::vector<float> data;
 	std::vector<unsigned int> indexs;
 	aiMatrix4x4 trafo;
@@ -21,26 +22,22 @@ Model::Model(std::string filename, bool invert)
 	}
 
  	//initializing the max and min dim using the numeric float limits, so that we are
-	//sure we'll be finding a new propper bigger and smaller value for them.
+	//sure we'll be finding a new bigger and smaller value for them.
 	max_dim = -glm::vec3(std::numeric_limits<float>::max());
 	min_dim = glm::vec3(std::numeric_limits<float>::max());
 
 	loadRecursive(root, invert, data, indexs, max_dim, min_dim, scene, scene->mRootNode);
-	
-	std::cout << "min x: " << min_dim.x << " min y: " << min_dim.y << " min z: " << min_dim.z << std::endl;
-	std::cout << "max x: " << max_dim.x << " max y: " << max_dim.y << " max z: " << max_dim.z << std::endl;
 
-	float diameter = glm::distance(min_dim, max_dim);
-	glm::vec3 center = min_dim + max_dim;
-	center /= 2;
-	std::cout << "diameter = " << diameter << std::endl;
-	std::cout << "center x = " << center.x << " y = " << center.y << " z = " << center.z << std::endl;
+	onLoadDiameter = glm::distance(min_dim, max_dim);
+	centeringTransformation = min_dim + max_dim;
+	centeringTransformation /= 2;
+	downScale = 1/onLoadDiameter;
+
 	//Set the transformation matrix for the root node
-	//the scale given by 1.0f/diameter scales the model to fit within the unit sphere
-	root.transform = glm::scale(root.transform, glm::vec3(1.0f/diameter));
-	root.transform = glm::translate(root.transform, -center);
+	root.transform = glm::scale(root.transform, glm::vec3(downScale));
+	root.transform = glm::translate(root.transform, -centeringTransformation);
 
-	dataSize = data.size();
+	unsigned int dataSize = data.size();
 
 	//Create the VBOs from the data.
 	if (fmod(static_cast<float>(dataSize), 3.0f) < 0.000001f) 
@@ -56,6 +53,7 @@ Model::Model(std::string filename, bool invert)
 	else
 		THROW_EXCEPTION("The number of vertices in the mesh is wrong");
 
+	PrintModelInfoToConsole();
 }
 
 Model::~Model() 
@@ -87,6 +85,9 @@ void Model::loadRecursive( MeshPart& part, bool invert, std::vector<float>& data
 		unsigned int indexOffset = data.size()/6;
 		data.reserve(data.size() + part.count*3);
 		
+		//Storing the indices of this meshPart. Applying index offset
+		//to each index, matching the number of vertices already stored
+		//in the vector from other meshparts
 		for(unsigned int t = 0; t < mesh->mNumFaces; ++t)
 		{
 			const struct aiFace* face = &mesh->mFaces[t];
@@ -97,6 +98,8 @@ void Model::loadRecursive( MeshPart& part, bool invert, std::vector<float>& data
 			}
 		}
 
+		//Storing the vertices, normals and potentially texture coordinates
+		//in the data vector. 
 		bool hasNormals = mesh->HasNormals();
 		for(unsigned int v = 0; v < mesh->mNumVertices; v++)
 		{
@@ -115,35 +118,6 @@ void Model::loadRecursive( MeshPart& part, bool invert, std::vector<float>& data
 				data.push_back(mesh->mNormals[v].z);
 			}
 		}
-		
-		////Add the vertices from file
-		//for (unsigned int t = 0; t < mesh->mNumFaces; ++t) 
-		//{
-		//	const struct aiFace* face = &mesh->mFaces[t];
-
-		//	if(face->mNumIndices != 3)
-		//		THROW_EXCEPTION("Only triangle meshes are supported");
-
-		//	for(unsigned int i = 0; i < face->mNumIndices; i++) 
-		//	{
-		//		int index = face->mIndices[i];
-		//		float x = mesh->mVertices[index].x;
-		//		float y = mesh->mVertices[index].y;
-		//		float z = mesh->mVertices[index].z;
-
-		//		//checks if the x, y or z should be part of the bounding box
-		//		checkDimensions(x, y, z, max_dim, min_dim);
-
-		//		data.push_back(x);
-		//		data.push_back(y);
-		//		data.push_back(z);
-		//		
-		//		if(hasNormals)
-		//		{
-		//			data.push_back(mesh->mNormals[index].x);
-		//			data.push_back(mesh->mNormals[index].y);
-		//			data.push_back(mesh->mNormals[index].z);
-		//		}
 		//		
 		//		if(mesh->HasTextureCoords(0))
 		//		{
@@ -157,8 +131,6 @@ void Model::loadRecursive( MeshPart& part, bool invert, std::vector<float>& data
 		//			data.push_back(0);
 		//			data.push_back(0);
 		//		}
-		//	}
-		//}
 	}
 
 
@@ -186,4 +158,16 @@ void Model::checkDimensions( float x, float y, float z, glm::vec3& max_dim, glm:
 		max_dim.y = y;
 	if(z > max_dim.z)
 		max_dim.z = z;
+}
+
+void Model::PrintModelInfoToConsole()
+{
+	std::cout << "Model info: "<< std::endl;
+	std::cout << "Filename:\t\t" << fileName << std::endl;
+	std::cout << "On load min_dim:\t" << "X: " << min_dim.x << "\tY: " << min_dim.y << "\tZ: " << min_dim.z << std::endl;
+	std::cout << "On load max_dim:\t" << "X: " << max_dim.x << "\tY: " << max_dim.y << "\tZ: " << max_dim.z << std::endl;
+
+	std::cout << "On load diameter:\t" << onLoadDiameter << std::endl;
+	std::cout << "Scale value:\t\t" << downScale << std::endl;
+	std::cout << "Center transformation:\t" << "X: " << centeringTransformation.x << "\tY: " << centeringTransformation.y << "\tZ: " << centeringTransformation.z << std::endl;
 }
