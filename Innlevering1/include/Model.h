@@ -21,12 +21,15 @@ struct MeshPart
 		transform = glm::mat4(1.0f);
 		first = 0;
 		count = 0;
+		texCoords0 = false;
 	}
 
 	glm::mat4 transform;
 
 	unsigned int first;	//<this meshParts initial index offset in the VBO
 	unsigned int count;	//<the index length of this meshPart
+	
+	bool texCoords0;//<true if the meshPart has one texture coord collection
 
 	std::vector<MeshPart> children;
 };

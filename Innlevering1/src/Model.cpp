@@ -101,6 +101,7 @@ void Model::loadRecursive( MeshPart& part, bool invert, std::vector<float>& data
 		//Storing the vertices, normals and potentially texture coordinates
 		//in the data vector. 
 		bool hasNormals = mesh->HasNormals();
+		part.texCoords0 = mesh->HasTextureCoords(0);
 		for(unsigned int v = 0; v < mesh->mNumVertices; v++)
 		{
 			//adding vertices
@@ -117,20 +118,13 @@ void Model::loadRecursive( MeshPart& part, bool invert, std::vector<float>& data
 				data.push_back(mesh->mNormals[v].y);
 				data.push_back(mesh->mNormals[v].z);
 			}
-		}
-		//		
-		//		if(mesh->HasTextureCoords(0))
-		//		{
-		//			data.push_back(mesh->mTextureCoords[0][index].x);
-		//			data.push_back(mesh->mTextureCoords[0][index].y);
-		//			data.push_back(mesh->mTextureCoords[0][index].z);
-		//		}
-		//		else
-		//		{
-		//			data.push_back(0);
-		//			data.push_back(0);
-		//			data.push_back(0);
-		//		}
+			if(mesh->HasTextureCoords(0))
+			{
+				data.push_back(mesh->mTextureCoords[0][v].x);
+				data.push_back(mesh->mTextureCoords[0][v].y);
+				data.push_back(mesh->mTextureCoords[0][v].z);
+			}
+		}	
 	}
 
 
