@@ -120,9 +120,9 @@ void Model::loadRecursive( MeshPart& part, bool invert, std::vector<float>& data
 			}
 			if(mesh->HasTextureCoords(0))
 			{
-				data.push_back(mesh->mTextureCoords[0][v].x);
+				/*data.push_back(mesh->mTextureCoords[0][v].x);
 				data.push_back(mesh->mTextureCoords[0][v].y);
-				data.push_back(mesh->mTextureCoords[0][v].z);
+				data.push_back(mesh->mTextureCoords[0][v].z);*/
 			}
 		}	
 	}

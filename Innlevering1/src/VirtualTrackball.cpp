@@ -29,13 +29,17 @@ glm::mat4 quatToMat4(glm::quat m_q)
 	//retMat[3][3] = 1;
 
 	//return retMat;
-	const float s = 2.0f;
-	glm::mat4 retMat;
 
+
+	
+	glm::mat4 returnMatrix;
+	const float s = 2.0f;
+
+	//Normalizing if the quaternion is not of length 1
 	if(abs(glm::length(m_q) - 1.0f) > 0.000001f)
 		m_q = glm::normalize(m_q);
 
-	retMat = glm::mat4(
+	returnMatrix = glm::mat4(
 		1 - (s * (pow(m_q.y, 2) + pow(m_q.z, 2))), 
 		s * (m_q.x * m_q.y - m_q.w * m_q.z),   
 		s * (m_q.x * m_q.z + m_q.w * m_q.y),   
@@ -48,7 +52,7 @@ glm::mat4 quatToMat4(glm::quat m_q)
 		s * (m_q.y * m_q.z + m_q.w * m_q.x),   
 		1 - (s * (pow(m_q.x, 2) + pow(m_q.y, 2))), 
 		0, 0, 0, 0, 1);
-	return retMat;
+	return returnMatrix;
 }
 
 VirtualTrackball::VirtualTrackball() 
@@ -149,7 +153,8 @@ glm::vec3 VirtualTrackball::getClosestPointOnUnitSphere(int x, int y)
 	//}
 	//else
 	//{
-
+	//k = sqrt(static_cast<float>((normalized_coords.x * normalized_coords.x) + (normalized_coords.y * normalized_coords.y)));
+	///point_on_sphere = glm::vec3( normalized_coords.x / k, normalized_coords.y / k, 0.125f/k);
 	//	point_on_sphere = glm::vec3( normalized_coords.x / k, normalized_coords.y / k, 0.125f/k);
 	//	//using the hyperbolic sheet formula described on opengl.org/wiki/trackball
 	//	/*point_on_sphere = glm::vec3(normalized_coords.x, normalized_coords.y, 
@@ -157,18 +162,27 @@ glm::vec3 VirtualTrackball::getClosestPointOnUnitSphere(int x, int y)
 	//	//std::cout<<pow(k,2)/2 <<std::endl;
 	//	//std::cout<<(pow(k,2)/2) / (pow(k,2)/2)<<std::endl;
 	//}
+	
+	float r = 0.5f;
 
-	k = sqrt(static_cast<float>((normalized_coords.x * normalized_coords.x) + (normalized_coords.y * normalized_coords.y)));
-	float r = 0.8f;
-
-	float te = (pow(r,2) / 2) / k;
-	float te2 = pow(r, 2) / 2;
+	k = sqrt(static_cast<float>((normalized_coords.x * normalized_coords.x) 
+							  + (normalized_coords.y * normalized_coords.y)));
+	
+	
 
 	//Mouse is on the hyperbolic sheet
 	if (k > (pow(normalized_coords.x, 2) + pow(normalized_coords.x, 2) ))
-		point_on_sphere = glm::vec3( normalized_coords.x / k, normalized_coords.y / k, te);
-	else//Mouse is inside the sphere
-		point_on_sphere = glm::vec3( 2.0f * normalized_coords.x, 2.0f * normalized_coords.y, te2);
+	//if(r > pow(r, 2)/2.0f)
+		point_on_sphere = glm::vec3(normalized_coords.x / k, 
+									normalized_coords.y / k, 
+									(pow(r,2) / 2) / k);
 
+	//Mouse is inside the sphere
+	else
+		point_on_sphere = glm::vec3(normalized_coords.x * normalized_coords.x, 
+									normalized_coords.y * normalized_coords.y, 
+									sqrt(pow(normalized_coords.x, 2) + pow(normalized_coords.x, 2)));
+
+	
 	return point_on_sphere;
 }

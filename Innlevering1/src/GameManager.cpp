@@ -237,7 +237,7 @@ void GameManager::play()
 				trackball.rotateEnd(event.motion.x, event.motion.y);
 				break;
 			case SDL_MOUSEMOTION:
-				trackball_view_matrix = trackball.rotate(event.motion.x, event.motion.y, 2.0f);
+				trackball_view_matrix = trackball.rotate(event.motion.x, event.motion.y, 1.0f);
 				break;
 			case SDL_KEYDOWN:
 				if(event.key.keysym.sym == SDLK_RETURN && !hasBeenInConsoleMode)
