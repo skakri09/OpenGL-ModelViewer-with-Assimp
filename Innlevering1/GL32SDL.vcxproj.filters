@@ -88,5 +88,11 @@
     <None Include="shaders\wireframe.vert">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="shaders\textured.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shaders\textured.vert">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

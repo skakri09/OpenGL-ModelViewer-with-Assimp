@@ -168,21 +168,21 @@ glm::vec3 VirtualTrackball::getClosestPointOnUnitSphere(int x, int y)
 	k = sqrt(static_cast<float>((normalized_coords.x * normalized_coords.x) 
 							  + (normalized_coords.y * normalized_coords.y)));
 	
-	
 
+	float inZ = sqrt(1 - 4 * (k*k));
+	float outZ = ((r*r)/2)/k;
 	//Mouse is on the hyperbolic sheet
-	if (k > (pow(normalized_coords.x, 2) + pow(normalized_coords.x, 2) ))
-	//if(r > pow(r, 2)/2.0f)
-		point_on_sphere = glm::vec3(normalized_coords.x / k, 
-									normalized_coords.y / k, 
-									(pow(r,2) / 2) / k);
+	if (k > r*r/2)
+		point_on_sphere = glm::vec3(normalized_coords.x * 2.0f, 
+									normalized_coords.y * 2.0f, 
+									outZ);
 
 	//Mouse is inside the sphere
 	else
-		point_on_sphere = glm::vec3(normalized_coords.x * normalized_coords.x, 
-									normalized_coords.y * normalized_coords.y, 
-									sqrt(pow(normalized_coords.x, 2) + pow(normalized_coords.x, 2)));
+		point_on_sphere = glm::vec3(normalized_coords.x * 2.0f, 
+									normalized_coords.y * 2.0f, 
+									inZ);
 
-	
+
 	return point_on_sphere;
 }

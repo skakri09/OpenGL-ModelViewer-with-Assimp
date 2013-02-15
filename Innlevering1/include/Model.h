@@ -34,6 +34,13 @@ struct MeshPart
 	std::vector<MeshPart> children;
 };
 
+struct Vertex
+{
+	glm::vec3 vertex;
+	glm::vec3 normal;
+	glm::vec2 texCoord0;
+};
+
 class Model 
 {
 public:
@@ -68,6 +75,12 @@ private:
 		glm::vec3& max_dim, glm::vec3& min_dim,
 		const aiScene* scene, const aiNode* node);
 
+	static void loadRecursive(MeshPart& part, bool invert,
+		std::vector<Vertex>& vertexData,
+		std::vector<unsigned int>& indexes,
+		glm::vec3& max_dim, glm::vec3& min_dim,
+		const aiScene* scene, const aiNode* node);
+
 	/*
 	* Helper function to see if x, y or z are bigger or smaller
 	* than the x, y and z stored in max_dim and min_dim. If any value
@@ -77,7 +90,9 @@ private:
 	*/
 	static void checkDimensions(float x, float y, float z, 
 								glm::vec3& max_dim, glm::vec3& min_dim);
-
+	
+	static void checkDimensions(glm::vec3 newVertex, glm::vec3& max_dim, glm::vec3& min_dim);
+	
 	const aiScene* scene;
 	MeshPart root;
 

@@ -35,6 +35,8 @@
     <None Include="shaders\hidden_line.vert" />
     <None Include="shaders\phong.frag" />
     <None Include="shaders\phong.vert" />
+    <None Include="shaders\textured.frag" />
+    <None Include="shaders\textured.vert" />
     <None Include="shaders\wireframe.frag" />
     <None Include="shaders\wireframe.vert" />
   </ItemGroup>

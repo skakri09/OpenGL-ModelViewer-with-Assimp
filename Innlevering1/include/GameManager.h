@@ -112,6 +112,7 @@ private:
 		RENDERMODE_FLAT,
 		RENDERMODE_WIREFRAME,
 		RENDERMODE_HIDDEN_LINE,
+		RENDERMODE_TEXTURED,
 		NONE
 	};
 
@@ -132,7 +133,7 @@ private:
 	std::shared_ptr<GLUtils::Program> prog_flat;
 	std::shared_ptr<GLUtils::Program> prog_wireframe;
 	std::shared_ptr<GLUtils::Program> prog_hiddenLine;
-
+	std::shared_ptr<GLUtils::Program> prog_textured;
 	std::shared_ptr<GLUtils::Program> createProgram(std::string vs_path, std::string fs_Path);
 
 	std::shared_ptr<Model> model;

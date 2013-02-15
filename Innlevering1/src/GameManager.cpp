@@ -96,6 +96,7 @@ void GameManager::createSimpleProgram()
 	prog_flat = createProgram("shaders/flat.vert", "shaders/flat.frag");
 	prog_wireframe = createProgram("shaders/wireframe.vert", "shaders/wireframe.frag");
 	prog_hiddenLine = createProgram("shaders/hidden_line.vert", "shaders/hidden_line.frag");
+	prog_textured = createProgram("shaders/textured.vert", "shaders/textured.frag");
 
 	renderMode = RENDERMODE_PHONG;
 	oldRenderMode = NONE;
@@ -328,6 +329,11 @@ void GameManager::DetermineRenderMode(SDL_Keycode keyCode)
 		renderMode = RENDERMODE_HIDDEN_LINE;
 		current_program = prog_hiddenLine;
 		break;
+	case SDLK_5:
+		renderMode = RENDERMODE_TEXTURED;
+		current_program = prog_textured;
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		break;
 	}
 }
 
@@ -361,6 +367,11 @@ void GameManager::UpdateAttripPtrs()
 
 		if(renderMode == RENDERMODE_PHONG || renderMode == RENDERMODE_FLAT)
 			current_program->setAttributePointer("normal", 3, GL_FLOAT, GL_FALSE, model->getStride(), model->getNormalOffset());
+
+		if(renderMode == RENDERMODE_TEXTURED)
+		{
+			current_program->setAttributePointer("textureCoord0", 2, GL_FLOAT, GL_FALSE, model->getStride(), model->getTexCoordOffset());
+		}
 	}
 }
 

@@ -9,6 +9,7 @@ Model::Model(std::string filename, bool invert)
 {
 	this->fileName = filename;
 	std::vector<float> data;
+	std::vector<Vertex> vertexData;
 	std::vector<unsigned int> indexs;
 	aiMatrix4x4 trafo;
 	aiIdentityMatrix4(&trafo);
@@ -26,7 +27,8 @@ Model::Model(std::string filename, bool invert)
 	max_dim = -glm::vec3(std::numeric_limits<float>::max());
 	min_dim = glm::vec3(std::numeric_limits<float>::max());
 
-	loadRecursive(root, invert, data, indexs, max_dim, min_dim, scene, scene->mRootNode);
+	//loadRecursive(root, invert, data, indexs, max_dim, min_dim, scene, scene->mRootNode);
+	loadRecursive(root, invert, vertexData, indexs, max_dim, min_dim, scene, scene->mRootNode);
 
 	onLoadDiameter = glm::distance(min_dim, max_dim);
 	centeringTransformation = min_dim + max_dim;
@@ -37,21 +39,23 @@ Model::Model(std::string filename, bool invert)
 	root.transform = glm::scale(root.transform, glm::vec3(downScale));
 	root.transform = glm::translate(root.transform, -centeringTransformation);
 
-	unsigned int dataSize = data.size();
+	//unsigned int dataSize = data.size();
 
 	//Create the VBOs from the data.
-	if (fmod(static_cast<float>(dataSize), 3.0f) < 0.000001f) 
-	{
-		interleavedVBO.reset(new GLUtils::VBO(data.data(), dataSize*sizeof(float)));
-		indexes.reset(new GLUtils::VBO(indexs.data(), indexs.size() * sizeof(unsigned int)));
+	//if (fmod(static_cast<float>(dataSize), 3.0f) < 0.000001f) 
+	//{
+
+	interleavedVBO.reset(new GLUtils::VBO(vertexData.data(), vertexData.size()*sizeof(Vertex)));
+	indexes.reset(new GLUtils::VBO(indexs.data(), indexs.size() * sizeof(unsigned int)));
 		
-		stride = 6*sizeof(float);//3 for vertices, 3 for normals.
-		verticeOffset = NULL;
-		normalOffset = (GLvoid*)(3*sizeof(float));
-		texCoordOffset = (GLvoid*)(6*sizeof(float));
-	}
+	stride = sizeof(Vertex);
+	verticeOffset = NULL;
+	normalOffset = (GLvoid*)(3*sizeof(float));
+	texCoordOffset = (GLvoid*)(6*sizeof(float));
+
+	/*}
 	else
-		THROW_EXCEPTION("The number of vertices in the mesh is wrong");
+		THROW_EXCEPTION("The number of vertices in the mesh is wrong");*/
 
 	PrintModelInfoToConsole();
 }
@@ -82,26 +86,14 @@ void Model::loadRecursive( MeshPart& part, bool invert, std::vector<float>& data
 		part.count = mesh->mNumFaces*3;
 
 		//Allocate data
-		unsigned int indexOffset = data.size()/6;
+		unsigned int indexOffset = data.size()/9;
 		data.reserve(data.size() + part.count*3);
-		
-		//Storing the indices of this meshPart. Applying index offset
-		//to each index, matching the number of vertices already stored
-		//in the vector from other meshparts
-		for(unsigned int t = 0; t < mesh->mNumFaces; ++t)
-		{
-			const struct aiFace* face = &mesh->mFaces[t];
-			if(face->mNumIndices != 3)
-				THROW_EXCEPTION("Only triangle meshes are supported");
-			for(unsigned int i = 0; i < face->mNumIndices; i++) {
-				indexes.push_back(face->mIndices[i]+indexOffset);
-			}
-		}
-
+		indexes.reserve(indexes.size() + mesh->mNumVertices*3);
 		//Storing the vertices, normals and potentially texture coordinates
 		//in the data vector. 
 		bool hasNormals = mesh->HasNormals();
 		part.texCoords0 = mesh->HasTextureCoords(0);
+		
 		for(unsigned int v = 0; v < mesh->mNumVertices; v++)
 		{
 			//adding vertices
@@ -118,13 +110,33 @@ void Model::loadRecursive( MeshPart& part, bool invert, std::vector<float>& data
 				data.push_back(mesh->mNormals[v].y);
 				data.push_back(mesh->mNormals[v].z);
 			}
-			if(mesh->HasTextureCoords(0))
+			if(part.texCoords0)
 			{
-				/*data.push_back(mesh->mTextureCoords[0][v].x);
+				data.push_back(mesh->mTextureCoords[0][v].x);
 				data.push_back(mesh->mTextureCoords[0][v].y);
-				data.push_back(mesh->mTextureCoords[0][v].z);*/
+				data.push_back(mesh->mTextureCoords[0][v].z);
+			}
+			else
+			{
+				data.push_back(0);
+				data.push_back(0);
+				data.push_back(0);
 			}
 		}	
+
+
+		//Storing the indices of this meshPart. Applying index offset
+		//to each index, matching the number of vertices already stored
+		//in the vector from other meshparts
+		for(unsigned int t = 0; t < mesh->mNumFaces; ++t)
+		{
+			const struct aiFace* face = &mesh->mFaces[t];
+			if(face->mNumIndices != 3)
+				THROW_EXCEPTION("Only triangle meshes are supported");
+			for(unsigned int i = 0; i < face->mNumIndices; i++) {
+				indexes.push_back(face->mIndices[i]+indexOffset);
+			}
+		}
 	}
 
 
@@ -133,6 +145,74 @@ void Model::loadRecursive( MeshPart& part, bool invert, std::vector<float>& data
 	{
 		part.children.push_back(MeshPart());
 		loadRecursive(part.children.back(), invert, data, indexes, max_dim, min_dim, scene, node->mChildren[n]);
+	}
+}
+
+void Model::loadRecursive( MeshPart& part, bool invert, std::vector<Vertex>& vertexData, 
+							std::vector<unsigned int>& indexes, glm::vec3& max_dim, glm::vec3& min_dim, 
+							const aiScene* scene, const aiNode* node )
+{
+	//update transform matrix. notice that we also transpose it
+	aiMatrix4x4 m = node->mTransformation;
+	for (int j=0; j<4; ++j)
+		for (int i=0; i<4; ++i)
+			part.transform[j][i] = m[i][j];
+
+	// draw all meshes assigned to this node
+	for (unsigned int n=0; n < node->mNumMeshes; ++n) 
+	{
+		const struct aiMesh* mesh = scene->mMeshes[node->mMeshes[n]];
+
+		part.first = indexes.size();
+		part.count = mesh->mNumFaces*3;
+
+		//Allocate data
+		unsigned int indexOffset = vertexData.size();
+		vertexData.reserve(vertexData.size() + part.count*3);
+		indexes.reserve(indexes.size() + mesh->mNumVertices*3);
+		 
+		bool hasNormals = mesh->HasNormals();
+		part.texCoords0 = mesh->HasTextureCoords(0);
+		for(unsigned int v = 0; v < mesh->mNumVertices; v++)
+		{
+			Vertex newVertex;
+
+			newVertex.vertex = glm::vec3(mesh->mVertices[v].x, mesh->mVertices[v].y, mesh->mVertices[v].z);
+
+			checkDimensions(newVertex.vertex, max_dim, min_dim);
+
+			if(hasNormals)
+				newVertex.normal = glm::vec3(mesh->mNormals[v].x, mesh->mNormals[v].y, mesh->mNormals[v].z);
+
+			if(part.texCoords0)
+				newVertex.texCoord0 = glm::vec2(mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y);
+			else
+				newVertex.texCoord0 = glm::vec2(0.0f, 0.0f);
+
+			vertexData.push_back(newVertex);
+		}	
+
+
+		//Storing the indices of this meshPart. Applying index offset
+		//to each index, matching the number of vertices already stored
+		//in the vector from other meshparts
+		for(unsigned int t = 0; t < mesh->mNumFaces; ++t)
+		{
+			const struct aiFace* face = &mesh->mFaces[t];
+			if(face->mNumIndices != 3)
+				THROW_EXCEPTION("Only triangle meshes are supported");
+			for(unsigned int i = 0; i < face->mNumIndices; i++) {
+				indexes.push_back(face->mIndices[i]+indexOffset);
+			}
+		}
+	}
+
+
+	// load all children
+	for (unsigned int n = 0; n < node->mNumChildren; ++n) 
+	{
+		part.children.push_back(MeshPart());
+		loadRecursive(part.children.back(), invert, vertexData, indexes, max_dim, min_dim, scene, node->mChildren[n]);
 	}
 }
 
@@ -152,6 +232,23 @@ void Model::checkDimensions( float x, float y, float z, glm::vec3& max_dim, glm:
 		max_dim.y = y;
 	if(z > max_dim.z)
 		max_dim.z = z;
+}
+
+void Model::checkDimensions( glm::vec3 newVertex, glm::vec3& max_dim, glm::vec3& min_dim )
+{
+	if(newVertex.x < min_dim.x)
+		min_dim.x = newVertex.x;
+	if(newVertex.y < min_dim.y)
+		min_dim.y = newVertex.y;
+	if(newVertex.z < min_dim.z)
+		min_dim.z = newVertex.z;
+
+	if(newVertex.x > max_dim.x)
+		max_dim.x = newVertex.x;
+	if(newVertex.y > max_dim.y)
+		max_dim.y = newVertex.y;
+	if(newVertex.z > max_dim.z)
+		max_dim.z = newVertex.z;
 }
 
 void Model::PrintModelInfoToConsole()
