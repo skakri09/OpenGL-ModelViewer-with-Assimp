@@ -4,34 +4,6 @@
 
 glm::mat4 quatToMat4(glm::quat m_q) 
 {
-	//glm::mat4 retMat;
-
-	//if(abs(glm::length(m_q) - 1.0f) > 0.000001f)
-	//{
-	//	m_q = glm::normalize(m_q);
-	//}
-
-	//retMat[0][0] = (1 - (2*((pow(m_q.y,2)) + (pow(m_q.z,2)))));
-	//retMat[0][1] = 2*( (m_q.x * m_q.y) - (m_q.w * m_q.z));
-	//retMat[0][2] = 2*( (m_q.x * m_q.z) + (m_q.w*m_q.y));
-	//retMat[0][3] = 0;
-	//retMat[1][0] = 2*((m_q.x*m_q.y) + (m_q.w*m_q.z));
-	//retMat[1][1] = 1 - (2*(pow(m_q.x,2) + pow(m_q.x,2)));
-	//retMat[1][2] = 2*((m_q.y*m_q.z) - (m_q.w*m_q.x));
-	//retMat[1][3] = 0;
-	//retMat[2][0] = 2*((m_q.x*m_q.z) - (m_q.w*m_q.y));
-	//retMat[2][1] = 2*((m_q.y*m_q.z) + (m_q.w*m_q.x));
-	//retMat[2][2] = 1-(2*(pow(m_q.x,2)) + (pow(m_q.y,2)));
-	//retMat[2][3] = 0;
-	//retMat[3][0] = 0;
-	//retMat[3][1] = 0;
-	//retMat[3][2] = 0;
-	//retMat[3][3] = 1;
-
-	//return retMat;
-
-
-	
 	glm::mat4 returnMatrix;
 	const float s = 2.0f;
 
@@ -40,17 +12,17 @@ glm::mat4 quatToMat4(glm::quat m_q)
 		m_q = glm::normalize(m_q);
 
 	returnMatrix = glm::mat4(
-		1 - (s * (pow(m_q.y, 2) + pow(m_q.z, 2))), 
+		1 - (s * (m_q.y*m_q.y + m_q.z*m_q.z)), 
 		s * (m_q.x * m_q.y - m_q.w * m_q.z),   
 		s * (m_q.x * m_q.z + m_q.w * m_q.y),   
 		0,
 		s * (m_q.x * m_q.y + m_q.w * m_q.z),    
-		1 - (s * (pow(m_q.x, 2) + pow(m_q.z, 2))), 
+		1 - (s * (m_q.x*m_q.x + m_q.z*m_q.z)), 
 		s * (m_q.y * m_q.z - m_q.w * m_q.x),   
 		0,
 		s * (m_q.x * m_q.z - m_q.w * m_q.y),    
 		s * (m_q.y * m_q.z + m_q.w * m_q.x),   
-		1 - (s * (pow(m_q.x, 2) + pow(m_q.y, 2))), 
+		1 - (s * (m_q.x*m_q.x + m_q.y*m_q.y)), 
 		0, 0, 0, 0, 1);
 	return returnMatrix;
 }
@@ -171,6 +143,7 @@ glm::vec3 VirtualTrackball::getClosestPointOnUnitSphere(int x, int y)
 
 	float inZ = sqrt(1 - 4 * (k*k));
 	float outZ = ((r*r)/2)/k;
+
 	//Mouse is on the hyperbolic sheet
 	if (k > r*r/2)
 		point_on_sphere = glm::vec3(normalized_coords.x * 2.0f, 

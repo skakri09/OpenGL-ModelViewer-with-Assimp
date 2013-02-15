@@ -100,7 +100,6 @@ protected:
 	static const unsigned int window_width = 1280;
 	static const unsigned int window_height = 720;
 
-
 	void ZoomIn();
 
 	void ZoomOut();

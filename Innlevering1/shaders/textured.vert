@@ -2,6 +2,7 @@
 uniform mat4 projection_matrix;
 uniform mat4 modelview_matrix;
 uniform mat3 normal_matrix;
+uniform sampler2D diffuseMap_texture;
 
 in vec3 position;
 in vec3 normal;

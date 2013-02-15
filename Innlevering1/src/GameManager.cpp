@@ -158,16 +158,37 @@ void GameManager::renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<Prog
 	glm::mat4 modelview_matrix = view_matrix*meshpart_model_matrix;
 	glUniformMatrix4fv(program->getUniform("modelview_matrix"), 1, 0, glm::value_ptr(modelview_matrix));
 
-	//Create normal matrix, the transpose of the inverse
-	//3x3 leading submatrix of the modelview matrix
-	if(mode == RENDERMODE_PHONG || mode == RENDERMODE_FLAT)
+	if(mode == RENDERMODE_TEXTURED)
 	{
+	
+		if(mesh.diffuseTextures.size() > 0)
+		{
+			glActiveTexture(GL_TEXTURE0);
+			GLint asd = ModelTexture::Inst()->GetTexture(mesh.diffuseTextures.at(0));
+			glBindTexture(GL_TEXTURE_2D, asd);
+			//glUniform1i(program->getUniform("diffuseMap_texture"), 0);
+		}
+		
+		
 		glm::mat3 normal_matrix = glm::transpose(glm::inverse(glm::mat3(modelview_matrix)));
 		glUniformMatrix3fv(program->getUniform("normal_matrix"), 1, 0, glm::value_ptr(normal_matrix));
+		
+		glDrawElements(GL_TRIANGLES, mesh.count, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * mesh.first));
+	}	
+	else
+	{
+		//Create normal matrix, the transpose of the inverse
+		//3x3 leading submatrix of the modelview matrix
+		if(mode == RENDERMODE_PHONG || mode == RENDERMODE_FLAT)
+		{
+			glm::mat3 normal_matrix = glm::transpose(glm::inverse(glm::mat3(modelview_matrix)));
+			glUniformMatrix3fv(program->getUniform("normal_matrix"), 1, 0, glm::value_ptr(normal_matrix));
+		}
+
+		//Drawing with indices, thus using drawElements instead of drawArrays
+		glDrawElements(GL_TRIANGLES, mesh.count, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * mesh.first));
 	}
 	
-	//Drawing with indices, thus using drawElements instead of drawArrays
-	glDrawElements(GL_TRIANGLES, mesh.count, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * mesh.first));
 
 	for (unsigned int i=0; i<mesh.children.size(); ++i)
 		renderMeshRecursive(mesh.children.at(i), program, view_matrix, meshpart_model_matrix, mode);
