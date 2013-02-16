@@ -317,11 +317,11 @@ void GameManager::render() {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	
 	program->use();
-	glUniform4f(program->getUniform("color"), 1.0f, 1.0f, 1.0f, 1.0f);
+	glUniform4f(program->getUniform("color"), 1.0f, 0.0f, 0.0f, 1.0f);
 	program->disuse();
 
-	renderText("Testuuuurrrrr", &atlas48, 0, 0, sx, sy);
-
+	//renderText("Testuuuurrrrr", &atlas48, 0, 0, sx, sy);
+	renderText("HELLO__asd nub WORLD", &atlas48, -1, 0, 1.0/window_width, 1.0/window_height);
 	program->use();
 	glUniform4f(program->getUniform("color"), 1.0f, 1.0f, 0.0f, 1.0f);
 	program->disuse();
