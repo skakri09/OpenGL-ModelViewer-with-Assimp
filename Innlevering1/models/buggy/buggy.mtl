@@ -13,5 +13,5 @@ newmtl buggy
 	Ks 0.4450 0.4450 0.4450
 	Ke 0.0000 0.0000 0.0000
 	map_Ka C:\PG612\PG612-Innlevering1\Innlevering1\models\buggy\buggy_diff.tga
-	map_Kd C:\PG612\PG612-Innlevering1\Innlevering1\models\buggy\buggy_diff.tga
-	map_bump Map__1_Normal_Bump.bmp
+	map_Kd buggy_diff.bmp
+	map_Kd Map__1_Normal_Bump.bmp

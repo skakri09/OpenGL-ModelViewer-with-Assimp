@@ -383,7 +383,7 @@ void GameManager::UpdateAttripPtrs()
 {
 	if(oldRenderMode != renderMode)
 	{
-		oldRenderMode = renderMode;
+		oldRenderMode = renderMode;	
 		current_program->setAttributePointer("position", 3, GL_FLOAT, GL_FALSE, model->getStride(), model->getVerticeOffset());
 
 		if(renderMode == RENDERMODE_PHONG || renderMode == RENDERMODE_FLAT)
