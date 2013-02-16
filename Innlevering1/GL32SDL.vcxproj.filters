@@ -45,7 +45,7 @@
     <ClInclude Include="include\FileHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\ModelTexture.h">
+    <ClInclude Include="include\TextureFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -65,7 +65,7 @@
     <ClCompile Include="src\FileHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\ModelTexture.cpp">
+    <ClCompile Include="src\TextureFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

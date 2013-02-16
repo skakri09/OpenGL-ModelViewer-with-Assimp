@@ -51,7 +51,7 @@ private:
 
 	/**
 	  * Function that computes the closest 3D point on the unit sphere
-	  * from the 2D window position.
+	  * from the 2D window position. 
 	  */
 	glm::vec3 getClosestPointOnUnitSphere(int x, int y);
 

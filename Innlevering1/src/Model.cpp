@@ -92,6 +92,7 @@ void Model::loadRecursive( MeshPart& part, bool invert, std::vector<Vertex>& ver
 		bool hasNormals = mesh->HasNormals();
 		part.texCoords0 = mesh->HasTextureCoords(0);
 		
+		//Loading all the vertex data (vertices, normals and texture coordinates)
 		for(unsigned int v = 0; v < mesh->mNumVertices; v++)
 		{
 			Vertex newVertex;
@@ -172,7 +173,7 @@ void Model::FindMaterials( const aiScene* scene, const aiMesh* mesh,
 		p->GetTexture(aiTextureType_DIFFUSE, i, &s);
 		meshpart.diffuseTextures.push_back(relativeDirPath + "/" + s.C_Str());
 		std::cout << "Diffuse Texture: " << relativeDirPath + "/" +s.C_Str() << std::endl;
-		ModelTexture::Inst()->LoadTexture(meshpart.diffuseTextures.back());
+		TextureFactory::Inst()->LoadTexture(meshpart.diffuseTextures.back());
 	}
 	for(unsigned int i = 0; i < p->GetTextureCount(aiTextureType_NORMALS); i++)
 	{
@@ -180,7 +181,7 @@ void Model::FindMaterials( const aiScene* scene, const aiMesh* mesh,
 		p->GetTexture(aiTextureType_NORMALS, i, &s);
 		meshpart.normalTextures.push_back(relativeDirPath + "/" + s.C_Str());
 		std::cout << "Normalmap Texture: " << relativeDirPath + "/" + s.C_Str() << std::endl;
-		ModelTexture::Inst()->LoadTexture(meshpart.normalTextures.back());
+		TextureFactory::Inst()->LoadTexture(meshpart.normalTextures.back());
 	}
 	for(unsigned int i = 0; i < p->GetTextureCount(aiTextureType_SPECULAR); i++)
 	{
@@ -188,6 +189,6 @@ void Model::FindMaterials( const aiScene* scene, const aiMesh* mesh,
 		p->GetTexture(aiTextureType_SPECULAR, i, &s);
 		meshpart.specularTextures.push_back(relativeDirPath + "/" + s.C_Str());
 		std::cout << "Specular Texture: " << relativeDirPath + "/" + s.C_Str() << std::endl;
-		ModelTexture::Inst()->LoadTexture(meshpart.specularTextures.back());
+		TextureFactory::Inst()->LoadTexture(meshpart.specularTextures.back());
 	}
 }

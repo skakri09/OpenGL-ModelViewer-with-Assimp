@@ -126,16 +126,20 @@ private:
 
 	GLuint vao; //< Vertex array object
 	
-	//GLuint program; //< OpenGL shader program
-	std::shared_ptr<GLUtils::Program> current_program;
+	//The various shader programs we can use
+	std::shared_ptr<GLUtils::Program> current_program; //<A pointer to the program currently in use
 	std::shared_ptr<GLUtils::Program> prog_phong;
 	std::shared_ptr<GLUtils::Program> prog_flat;
 	std::shared_ptr<GLUtils::Program> prog_wireframe;
 	std::shared_ptr<GLUtils::Program> prog_hiddenLine;
 	std::shared_ptr<GLUtils::Program> prog_textured;
+
+	/*
+	* Helper function to create a shader program. The two parameters are paths to the shader txt files
+	*/
 	std::shared_ptr<GLUtils::Program> createProgram(std::string vs_path, std::string fs_Path);
 
-	std::shared_ptr<Model> model;
+	std::shared_ptr<Model> model; //< The currently loaded model
 
 	Timer my_timer; //< Timer for machine independent motion
 

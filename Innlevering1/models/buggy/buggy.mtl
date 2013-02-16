@@ -14,4 +14,4 @@ newmtl buggy
 	Ke 0.0000 0.0000 0.0000
 	map_Ka C:\PG612\PG612-Innlevering1\Innlevering1\models\buggy\buggy_diff.tga
 	map_Kd buggy_diff.bmp
-	map_Kd Map__1_Normal_Bump.bmp
+	map_Kn Map__1_Normal_Bump.bmp

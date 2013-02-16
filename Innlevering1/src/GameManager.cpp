@@ -92,20 +92,23 @@ void GameManager::createMatrices()
 
 void GameManager::createSimpleProgram() 
 {
+	//Loading and compiling all the shader programs we can use
 	prog_phong = createProgram("shaders/phong.vert", "shaders/phong.frag");
 	prog_flat = createProgram("shaders/flat.vert", "shaders/flat.frag");
 	prog_wireframe = createProgram("shaders/wireframe.vert", "shaders/wireframe.frag");
 	prog_hiddenLine = createProgram("shaders/hidden_line.vert", "shaders/hidden_line.frag");
 	prog_textured = createProgram("shaders/textured.vert", "shaders/textured.frag");
 
-	renderMode = RENDERMODE_PHONG;
+	renderMode = RENDERMODE_TEXTURED;
 	oldRenderMode = NONE;
-	current_program = prog_phong;	
+	current_program = prog_textured;	
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void GameManager::createVAO() 
 {
+	//Loading the model set by commandline argument as initial model, unless
+	//there is nothing in the modelToLoad string. We then just load the bunny
 	if(modelToLoad.size() > 0)
 		LoadModel(modelToLoad);
 	else
@@ -160,20 +163,24 @@ void GameManager::renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<Prog
 
 	if(mode == RENDERMODE_TEXTURED)
 	{
-	
-		if(mesh.diffuseTextures.size() > 0)
+		//If the rendermode is RENDERMODE_TEXTURED, we attempt to bind the texture which name is stored in the meshpart.
+		//Currently this code only support one diffuse texture
+		bool boundTexture = false;
+		if(mesh.diffuseTextures.size() > 0 && mesh.texCoords0)
 		{
+			boundTexture = true;
 			glActiveTexture(GL_TEXTURE0);
-			GLint asd = ModelTexture::Inst()->GetTexture(mesh.diffuseTextures.at(0));
-			glBindTexture(GL_TEXTURE_2D, asd);
-			//glUniform1i(program->getUniform("diffuseMap_texture"), 0);
+			glBindTexture(GL_TEXTURE_2D, TextureFactory::Inst()->GetTexture(mesh.diffuseTextures.at(0)));
 		}
-		
-		
+
 		glm::mat3 normal_matrix = glm::transpose(glm::inverse(glm::mat3(modelview_matrix)));
 		glUniformMatrix3fv(program->getUniform("normal_matrix"), 1, 0, glm::value_ptr(normal_matrix));
 		
 		glDrawElements(GL_TRIANGLES, mesh.count, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * mesh.first));
+		if(boundTexture)
+		{
+			glBindTexture(GL_TEXTURE_2D, 0);
+		}
 	}	
 	else
 	{
@@ -208,6 +215,7 @@ void GameManager::render()
 
 	glUniformMatrix4fv(current_program->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
 	
+	//IF its hidden_line rendermode, we do some polygon offset stuff here and in the next if check below
 	if(renderMode == RENDERMODE_HIDDEN_LINE)
 	{
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -215,7 +223,10 @@ void GameManager::render()
 		glPolygonOffset(1.0f, 4.4f);
 		glUniform4fv(current_program->getUniform("rendering_color"), 1, glm::value_ptr(backgroundColor));
 	}
+
 	renderMeshRecursive(model->getMesh(), current_program, view_matrix_new, model_matrix, renderMode);
+	
+	//Rendering the model a second time with some polygon offset magic if its hidden_line rendering
 	if(renderMode == RENDERMODE_HIDDEN_LINE)
 	{
 		glDisable(GL_POLYGON_OFFSET_FILL);
@@ -307,7 +318,6 @@ void GameManager::ZoomIn()
 		FoV = 0.0001f;
 
 	projection_matrix = glm::perspective(FoV,	window_width / (float) window_height, 1.0f, 10.f);
-	std::cout << "FoV: " << FoV << std::endl;
 }
 
 void GameManager::ZoomOut()
@@ -322,7 +332,6 @@ void GameManager::ZoomOut()
 		FoV = 179.999f;
 
 	projection_matrix = glm::perspective(FoV,	window_width / (float) window_height, 1.0f, 10.f);
-	std::cout << "FoV: " << FoV << std::endl;
 }
 
 void GameManager::DetermineRenderMode(SDL_Keycode keyCode)
@@ -386,7 +395,7 @@ void GameManager::UpdateAttripPtrs()
 		oldRenderMode = renderMode;	
 		current_program->setAttributePointer("position", 3, GL_FLOAT, GL_FALSE, model->getStride(), model->getVerticeOffset());
 
-		if(renderMode == RENDERMODE_PHONG || renderMode == RENDERMODE_FLAT)
+		if(renderMode == RENDERMODE_PHONG || renderMode == RENDERMODE_FLAT || renderMode == RENDERMODE_TEXTURED)
 			current_program->setAttributePointer("normal", 3, GL_FLOAT, GL_FALSE, model->getStride(), model->getNormalOffset());
 
 		if(renderMode == RENDERMODE_TEXTURED)

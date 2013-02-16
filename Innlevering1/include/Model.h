@@ -13,7 +13,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "GLUtils/VBO.hpp"
-#include "ModelTexture.h"
+#include "TextureFactory.h"
 
 struct MeshPart 
 {
@@ -101,19 +101,19 @@ private:
 	//texture data. The indexes VBO stores indexes for the model
 	std::shared_ptr<GLUtils::VBO> interleavedVBO, indexes;
 	
-	glm::vec3 min_dim;//<max x, y and z for the model loaded.
-	glm::vec3 max_dim;//<min x, y and z for the model loaded
+	glm::vec3 min_dim;//< max x, y and z for the model loaded.
+	glm::vec3 max_dim;//< min x, y and z for the model loaded
 
 	GLint stride;			//< Stride value for the interleavedVBO
-	GLvoid* verticeOffset;	//<Offset value for the vertices (should be NULL)
-	GLvoid* normalOffset;	//<Offset value for the normals (should be 3*sizeof(float))
-	GLvoid* texCoordOffset;	///<Offset value for the textureCoords, if there are any(should be 6*sizeof(float))
+	GLvoid* verticeOffset;	//< Offset value for the vertices (should be NULL)
+	GLvoid* normalOffset;	//< Offset value for the normals (should be 3*sizeof(float))
+	GLvoid* texCoordOffset;	//< Offset value for the textureCoords, if there are any(should be 6*sizeof(float))
 
-	std::string modelFilePath;		//<Name of the file loaded
-	std::string projectRelativeDir;	//<Directory relative to project
-	float onLoadDiameter;			//<The diameter of the file on load
-	float downScale;				//<Model scaling value used to fit the model
-	glm::vec3 centeringTransformation;//<Transformation applied to scenter the model
+	std::string modelFilePath;		  //< Name of the file loaded
+	std::string projectRelativeDir;	  //< Directory relative to project
+	float onLoadDiameter;			  //< The diameter of the file on load
+	float downScale;				  //< Model scaling value used to fit the model
+	glm::vec3 centeringTransformation;//< Transformation applied to scenter the model
 
 	
 
