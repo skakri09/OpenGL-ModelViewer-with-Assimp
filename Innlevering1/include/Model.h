@@ -13,6 +13,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "GLUtils/VBO.hpp"
+#include "ModelTexture.h"
 
 struct MeshPart 
 {
@@ -29,9 +30,20 @@ struct MeshPart
 	unsigned int first;	//<this meshParts initial index offset in the VBO
 	unsigned int count;	//<the index length of this meshPart
 	
+	std::vector<std::string> diffuseTextures;
+	std::vector<std::string> normalTextures;
+	std::vector<std::string> specularTextures;
+
 	bool texCoords0;//<true if the meshPart has one texture coord collection
 
 	std::vector<MeshPart> children;
+};
+
+struct Vertex
+{
+	glm::vec3 vertex;
+	glm::vec3 normal;
+	glm::vec2 texCoord0;
 };
 
 class Model 
@@ -53,7 +65,6 @@ public:
 	inline GLvoid* getNormalOffset() {return normalOffset;}
 	inline GLvoid* getTexCoordOffset() {return texCoordOffset;}
 
-
 	/*
 	* Prints info about the model to the console
 	*/
@@ -61,12 +72,12 @@ public:
 
 private:
 	//This loadRecursive function places all data in one array,
-	//used for interleaved VBOs
+	//used for interleaved VBOs, as well as indexes in a separate array
 	static void loadRecursive(MeshPart& part, bool invert,
-		std::vector<float>& data,
+		std::vector<Vertex>& vertexData,
 		std::vector<unsigned int>& indexes,
 		glm::vec3& max_dim, glm::vec3& min_dim,
-		const aiScene* scene, const aiNode* node);
+		const aiScene* scene, const aiNode* node, std::string relativeDirPath);
 
 	/*
 	* Helper function to see if x, y or z are bigger or smaller
@@ -75,8 +86,13 @@ private:
 	* bigger than current value in max_dim), the value in the reference
 	* vector is replaced
 	*/
-	static void checkDimensions(float x, float y, float z, 
-								glm::vec3& max_dim, glm::vec3& min_dim);
+	static void checkDimensions(glm::vec3 newVertex, glm::vec3& max_dim, glm::vec3& min_dim);
+	
+	/*
+	* Loads material names for the meshPart into the appropriate vector of names
+	*/
+	static void FindMaterials(const aiScene* scene, const aiMesh* mesh, 
+							  MeshPart& meshpart, std::string relativeDirPath);
 
 	const aiScene* scene;
 	MeshPart root;
@@ -93,11 +109,13 @@ private:
 	GLvoid* normalOffset;	//<Offset value for the normals (should be 3*sizeof(float))
 	GLvoid* texCoordOffset;	///<Offset value for the textureCoords, if there are any(should be 6*sizeof(float))
 
-	std::string fileName;			//<Name of the file loaded
+	std::string modelFilePath;		//<Name of the file loaded
+	std::string projectRelativeDir;	//<Directory relative to project
 	float onLoadDiameter;			//<The diameter of the file on load
 	float downScale;				//<Model scaling value used to fit the model
 	glm::vec3 centeringTransformation;//<Transformation applied to scenter the model
 
+	
 
 };
 

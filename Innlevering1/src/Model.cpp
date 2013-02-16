@@ -4,11 +4,15 @@
 
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
+#include <boost/filesystem.hpp>
 
 Model::Model(std::string filename, bool invert) 
 {
-	this->fileName = filename;
-	std::vector<float> data;
+	boost::filesystem::path pa = filename;
+	projectRelativeDir = pa.branch_path().string();
+
+	this->modelFilePath = filename;
+	std::vector<Vertex> vertexData;
 	std::vector<unsigned int> indexs;
 	aiMatrix4x4 trafo;
 	aiIdentityMatrix4(&trafo);
@@ -26,7 +30,7 @@ Model::Model(std::string filename, bool invert)
 	max_dim = -glm::vec3(std::numeric_limits<float>::max());
 	min_dim = glm::vec3(std::numeric_limits<float>::max());
 
-	loadRecursive(root, invert, data, indexs, max_dim, min_dim, scene, scene->mRootNode);
+	loadRecursive(root, invert, vertexData, indexs, max_dim, min_dim, scene, scene->mRootNode, projectRelativeDir);
 
 	onLoadDiameter = glm::distance(min_dim, max_dim);
 	centeringTransformation = min_dim + max_dim;
@@ -37,15 +41,14 @@ Model::Model(std::string filename, bool invert)
 	root.transform = glm::scale(root.transform, glm::vec3(downScale));
 	root.transform = glm::translate(root.transform, -centeringTransformation);
 
-	unsigned int dataSize = data.size();
 
 	//Create the VBOs from the data.
-	if (fmod(static_cast<float>(dataSize), 3.0f) < 0.000001f) 
+	if (fmod(static_cast<float>(indexs.size()), 3.0f) < 0.000001f) 
 	{
-		interleavedVBO.reset(new GLUtils::VBO(data.data(), dataSize*sizeof(float)));
+		interleavedVBO.reset(new GLUtils::VBO(vertexData.data(), vertexData.size()*sizeof(Vertex)));
 		indexes.reset(new GLUtils::VBO(indexs.data(), indexs.size() * sizeof(unsigned int)));
-		
-		stride = 6*sizeof(float);//3 for vertices, 3 for normals.
+
+		stride = sizeof(Vertex);
 		verticeOffset = NULL;
 		normalOffset = (GLvoid*)(3*sizeof(float));
 		texCoordOffset = (GLvoid*)(6*sizeof(float));
@@ -61,9 +64,9 @@ Model::~Model()
 
 }
 
-void Model::loadRecursive( MeshPart& part, bool invert, std::vector<float>& data,
-							std::vector<unsigned int>& indexes,glm::vec3& max_dim, 
-							glm::vec3& min_dim, const aiScene* scene, const aiNode* node )
+void Model::loadRecursive( MeshPart& part, bool invert, std::vector<Vertex>& vertexData, 
+							std::vector<unsigned int>& indexes, glm::vec3& max_dim, glm::vec3& min_dim, 
+							const aiScene* scene, const aiNode* node, std::string relativeDirPath )
 {
 	//update transform matrix. notice that we also transpose it
 	aiMatrix4x4 m = node->mTransformation;
@@ -75,16 +78,39 @@ void Model::loadRecursive( MeshPart& part, bool invert, std::vector<float>& data
 	for (unsigned int n=0; n < node->mNumMeshes; ++n) 
 	{
 		const struct aiMesh* mesh = scene->mMeshes[node->mMeshes[n]];
-
-		//apply_material(scene->mMaterials[mesh->mMaterialIndex]);
+		
+		FindMaterials(scene, mesh, part, relativeDirPath);
 
 		part.first = indexes.size();
 		part.count = mesh->mNumFaces*3;
 
 		//Allocate data
-		unsigned int indexOffset = data.size()/6;
-		data.reserve(data.size() + part.count*3);
+		unsigned int indexOffset = vertexData.size();
+		vertexData.reserve(vertexData.size() + part.count*3);
+		indexes.reserve(indexes.size() + mesh->mNumVertices*3);
+		 
+		bool hasNormals = mesh->HasNormals();
+		part.texCoords0 = mesh->HasTextureCoords(0);
 		
+		for(unsigned int v = 0; v < mesh->mNumVertices; v++)
+		{
+			Vertex newVertex;
+
+			newVertex.vertex = glm::vec3(mesh->mVertices[v].x, mesh->mVertices[v].y, mesh->mVertices[v].z);
+
+			checkDimensions(newVertex.vertex, max_dim, min_dim);
+
+			if(hasNormals)
+				newVertex.normal = glm::vec3(mesh->mNormals[v].x, mesh->mNormals[v].y, mesh->mNormals[v].z);
+
+			if(part.texCoords0)
+				newVertex.texCoord0 = glm::vec2(mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y);
+			else
+				newVertex.texCoord0 = glm::vec2(0.0f, 0.0f);
+
+			vertexData.push_back(newVertex);
+		}	
+
 		//Storing the indices of this meshPart. Applying index offset
 		//to each index, matching the number of vertices already stored
 		//in the vector from other meshparts
@@ -97,71 +123,71 @@ void Model::loadRecursive( MeshPart& part, bool invert, std::vector<float>& data
 				indexes.push_back(face->mIndices[i]+indexOffset);
 			}
 		}
-
-		//Storing the vertices, normals and potentially texture coordinates
-		//in the data vector. 
-		bool hasNormals = mesh->HasNormals();
-		part.texCoords0 = mesh->HasTextureCoords(0);
-		for(unsigned int v = 0; v < mesh->mNumVertices; v++)
-		{
-			//adding vertices
-			float x = mesh->mVertices[v].x;
-			float y = mesh->mVertices[v].y;
-			float z = mesh->mVertices[v].z;
-			data.push_back(x);
-			data.push_back(y);
-			data.push_back(z);
-			checkDimensions(x, y, z, max_dim, min_dim);
-			if(hasNormals)
-			{
-				data.push_back(mesh->mNormals[v].x);
-				data.push_back(mesh->mNormals[v].y);
-				data.push_back(mesh->mNormals[v].z);
-			}
-			if(mesh->HasTextureCoords(0))
-			{
-				data.push_back(mesh->mTextureCoords[0][v].x);
-				data.push_back(mesh->mTextureCoords[0][v].y);
-				data.push_back(mesh->mTextureCoords[0][v].z);
-			}
-		}	
 	}
-
 
 	// load all children
 	for (unsigned int n = 0; n < node->mNumChildren; ++n) 
 	{
 		part.children.push_back(MeshPart());
-		loadRecursive(part.children.back(), invert, data, indexes, max_dim, min_dim, scene, node->mChildren[n]);
+		loadRecursive(part.children.back(), invert, vertexData, indexes, max_dim, min_dim, scene, node->mChildren[n], relativeDirPath);
 	}
 }
 
-
-void Model::checkDimensions( float x, float y, float z, glm::vec3& max_dim, glm::vec3& min_dim)
+void Model::checkDimensions( glm::vec3 newVertex, glm::vec3& max_dim, glm::vec3& min_dim )
 {
-	if(x < min_dim.x)
-		min_dim.x = x;
-	if(y < min_dim.y)
-		min_dim.y = y;
-	if(z < min_dim.z)
-		min_dim.z = z;
+	if(newVertex.x < min_dim.x)
+		min_dim.x = newVertex.x;
+	if(newVertex.y < min_dim.y)
+		min_dim.y = newVertex.y;
+	if(newVertex.z < min_dim.z)
+		min_dim.z = newVertex.z;
 
-	if(x > max_dim.x)
-		max_dim.x = x;
-	if(y > max_dim.y)
-		max_dim.y = y;
-	if(z > max_dim.z)
-		max_dim.z = z;
+	if(newVertex.x > max_dim.x)
+		max_dim.x = newVertex.x;
+	if(newVertex.y > max_dim.y)
+		max_dim.y = newVertex.y;
+	if(newVertex.z > max_dim.z)
+		max_dim.z = newVertex.z;
 }
 
 void Model::PrintModelInfoToConsole()
 {
 	std::cout << "Model info: "<< std::endl;
-	std::cout << "Filename:\t\t" << fileName << std::endl;
+	std::cout << "Filename:\t\t" << modelFilePath << std::endl;
 	std::cout << "On load min_dim:\t" << "X: " << min_dim.x << "\tY: " << min_dim.y << "\tZ: " << min_dim.z << std::endl;
 	std::cout << "On load max_dim:\t" << "X: " << max_dim.x << "\tY: " << max_dim.y << "\tZ: " << max_dim.z << std::endl;
 
 	std::cout << "On load diameter:\t" << onLoadDiameter << std::endl;
 	std::cout << "Scale value:\t\t" << downScale << std::endl;
 	std::cout << "Center transformation:\t" << "X: " << centeringTransformation.x << "\tY: " << centeringTransformation.y << "\tZ: " << centeringTransformation.z << std::endl;
+}
+
+void Model::FindMaterials( const aiScene* scene, const aiMesh* mesh,  
+						   MeshPart& meshpart, std::string relativeDirPath)
+{
+	aiMaterial* p =  scene->mMaterials[mesh->mMaterialIndex];
+	for(unsigned int i = 0; i < p->GetTextureCount(aiTextureType_DIFFUSE); i++)
+	{
+		aiString s;
+		p->GetTexture(aiTextureType_DIFFUSE, i, &s);
+		meshpart.diffuseTextures.push_back(relativeDirPath + "/" + s.C_Str());
+		std::cout << "Diffuse Texture: " << relativeDirPath + "/" +s.C_Str() << std::endl;
+		ModelTexture::Inst()->LoadTexture(meshpart.diffuseTextures.back());
+	}
+	for(unsigned int i = 0; i < p->GetTextureCount(aiTextureType_NORMALS); i++)
+	{
+		aiString s;
+		p->GetTexture(aiTextureType_NORMALS, i, &s);
+		meshpart.normalTextures.push_back(relativeDirPath + "/" + s.C_Str());
+		std::cout << "Normalmap Texture: " << relativeDirPath + "/" + s.C_Str() << std::endl;
+		ModelTexture::Inst()->LoadTexture(meshpart.normalTextures.back());
+	}
+	for(unsigned int i = 0; i < p->GetTextureCount(aiTextureType_SPECULAR); i++)
+	{
+		aiString s;
+		p->GetTexture(aiTextureType_SPECULAR, i, &s);
+		meshpart.specularTextures.push_back(relativeDirPath + "/" + s.C_Str());
+		std::cout << "Specular Texture: " << relativeDirPath + "/" + s.C_Str() << std::endl;
+		ModelTexture::Inst()->LoadTexture(meshpart.specularTextures.back());
+	}
 }

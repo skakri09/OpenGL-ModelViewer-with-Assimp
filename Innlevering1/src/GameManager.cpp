@@ -96,6 +96,7 @@ void GameManager::createSimpleProgram()
 	prog_flat = createProgram("shaders/flat.vert", "shaders/flat.frag");
 	prog_wireframe = createProgram("shaders/wireframe.vert", "shaders/wireframe.frag");
 	prog_hiddenLine = createProgram("shaders/hidden_line.vert", "shaders/hidden_line.frag");
+	prog_textured = createProgram("shaders/textured.vert", "shaders/textured.frag");
 
 	renderMode = RENDERMODE_PHONG;
 	oldRenderMode = NONE;
@@ -157,16 +158,37 @@ void GameManager::renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<Prog
 	glm::mat4 modelview_matrix = view_matrix*meshpart_model_matrix;
 	glUniformMatrix4fv(program->getUniform("modelview_matrix"), 1, 0, glm::value_ptr(modelview_matrix));
 
-	//Create normal matrix, the transpose of the inverse
-	//3x3 leading submatrix of the modelview matrix
-	if(mode == RENDERMODE_PHONG || mode == RENDERMODE_FLAT)
+	if(mode == RENDERMODE_TEXTURED)
 	{
+	
+		if(mesh.diffuseTextures.size() > 0)
+		{
+			glActiveTexture(GL_TEXTURE0);
+			GLint asd = ModelTexture::Inst()->GetTexture(mesh.diffuseTextures.at(0));
+			glBindTexture(GL_TEXTURE_2D, asd);
+			//glUniform1i(program->getUniform("diffuseMap_texture"), 0);
+		}
+		
+		
 		glm::mat3 normal_matrix = glm::transpose(glm::inverse(glm::mat3(modelview_matrix)));
 		glUniformMatrix3fv(program->getUniform("normal_matrix"), 1, 0, glm::value_ptr(normal_matrix));
+		
+		glDrawElements(GL_TRIANGLES, mesh.count, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * mesh.first));
+	}	
+	else
+	{
+		//Create normal matrix, the transpose of the inverse
+		//3x3 leading submatrix of the modelview matrix
+		if(mode == RENDERMODE_PHONG || mode == RENDERMODE_FLAT)
+		{
+			glm::mat3 normal_matrix = glm::transpose(glm::inverse(glm::mat3(modelview_matrix)));
+			glUniformMatrix3fv(program->getUniform("normal_matrix"), 1, 0, glm::value_ptr(normal_matrix));
+		}
+
+		//Drawing with indices, thus using drawElements instead of drawArrays
+		glDrawElements(GL_TRIANGLES, mesh.count, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * mesh.first));
 	}
 	
-	//Drawing with indices, thus using drawElements instead of drawArrays
-	glDrawElements(GL_TRIANGLES, mesh.count, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * mesh.first));
 
 	for (unsigned int i=0; i<mesh.children.size(); ++i)
 		renderMeshRecursive(mesh.children.at(i), program, view_matrix, meshpart_model_matrix, mode);
@@ -237,7 +259,7 @@ void GameManager::play()
 				trackball.rotateEnd(event.motion.x, event.motion.y);
 				break;
 			case SDL_MOUSEMOTION:
-				trackball_view_matrix = trackball.rotate(event.motion.x, event.motion.y, 2.0f);
+				trackball_view_matrix = trackball.rotate(event.motion.x, event.motion.y, 1.0f);
 				break;
 			case SDL_KEYDOWN:
 				if(event.key.keysym.sym == SDLK_RETURN && !hasBeenInConsoleMode)
@@ -328,6 +350,11 @@ void GameManager::DetermineRenderMode(SDL_Keycode keyCode)
 		renderMode = RENDERMODE_HIDDEN_LINE;
 		current_program = prog_hiddenLine;
 		break;
+	case SDLK_5:
+		renderMode = RENDERMODE_TEXTURED;
+		current_program = prog_textured;
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		break;
 	}
 }
 
@@ -356,11 +383,16 @@ void GameManager::UpdateAttripPtrs()
 {
 	if(oldRenderMode != renderMode)
 	{
-		oldRenderMode = renderMode;
+		oldRenderMode = renderMode;	
 		current_program->setAttributePointer("position", 3, GL_FLOAT, GL_FALSE, model->getStride(), model->getVerticeOffset());
 
 		if(renderMode == RENDERMODE_PHONG || renderMode == RENDERMODE_FLAT)
 			current_program->setAttributePointer("normal", 3, GL_FLOAT, GL_FALSE, model->getStride(), model->getNormalOffset());
+
+		if(renderMode == RENDERMODE_TEXTURED)
+		{
+			current_program->setAttributePointer("textureCoord0", 2, GL_FLOAT, GL_FALSE, model->getStride(), model->getTexCoordOffset());
+		}
 	}
 }
 
