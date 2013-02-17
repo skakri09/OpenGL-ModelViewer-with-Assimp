@@ -136,9 +136,9 @@ Text TextRenderer::RenderText( std::string text, std::string font, float xPos, f
 	std::vector<float> coords;
 	coords.resize(text.length() * 6 * 4);
 
-	Text rect;
-	rect.x = xPos + atlas->characters[text.at(0)].bl * scaleX;
-	rect.y = yPos;
+	Text retText;
+	retText.x = xPos + atlas->characters[text.at(0)].bl * scaleX;
+	retText.y = yPos;
 	int count = 0;
 	for(unsigned int i = 0; i < text.length(); i++){
 		unsigned char c = text.at(i);
@@ -148,8 +148,8 @@ Text TextRenderer::RenderText( std::string text, std::string font, float xPos, f
 		float w = atlas->characters[c].bw * scaleX;
 		float h = atlas->characters[c].bh * scaleY;
 		
-		if(rect.h < h)
-			rect.h = h;
+		if(retText.h < h)
+			retText.h = h;
 
 		xPos += atlas->characters[c].ax * scaleX;
 		yPos += atlas->characters[c].ay * scaleY;
@@ -189,11 +189,12 @@ Text TextRenderer::RenderText( std::string text, std::string font, float xPos, f
 		coords[count++] = atlas->characters[c].tx + atlas->characters[c].bw / atlas->width;
 		coords[count++] = atlas->characters[c].ty + atlas->characters[c].bh / atlas->height;
 	}
-	rect.w = xPos - rect.x;
-	rect.vbo.reset(new GLUtils::VBO(coords.data(), coords.size()*sizeof(float)));
-	rect.color = color;
-	rect.atlas = atlas;
-	rect.count = count;
+	retText.w = xPos - retText.x;
+	retText.vbo.reset(new GLUtils::VBO(coords.data(), coords.size()*sizeof(float)));
+	retText.color = color;
+	retText.atlas = atlas;
+	retText.count = count;
+	retText.text = text;
 
 	glBindVertexArray(vao);
 
@@ -210,7 +211,7 @@ Text TextRenderer::RenderText( std::string text, std::string font, float xPos, f
 	program->disuse();
 
 	CHECK_GL_ERROR();
-	return rect;
+	return retText;
 }
 
 void TextRenderer::RenderText( Text text )

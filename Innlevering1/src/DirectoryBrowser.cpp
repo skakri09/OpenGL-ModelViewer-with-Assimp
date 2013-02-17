@@ -11,19 +11,53 @@ DirectoryBrowser::~DirectoryBrowser()
 }
 
 
-void DirectoryBrowser::RenderDirectoryBrowser()
+void DirectoryBrowser::RenderDirectoryBrowser(float mouseX, float mouseY, LeftMouseState* state)
 {
+	if(*state == FIRST_UP && previousState == FIRST_UP)
+		*state = UP;
+	else if(*state == FIRST_DOWN && previousState == FIRST_DOWN)
+		*state = DOWN;
+	previousState = *state;
+
 	if(showDirBrowser)
 	{
 		if(DirStack.size() > 0)
 		{
-			std::vector<Text> dir = DirStack.top();
+			std::vector<DirectoryEntry> dir = DirStack.top();
 			for(int i=0; i < dir.size(); i++)
-				textRenderer->RenderText(dir.at(i));
+			{
+				RenderEntry(&dir.at(i), mouseX, mouseY, state);
+			}
+			RenderEntry(&PopBack, mouseX, mouseY, state);
 		}
 	}
+
+	//	if(std::regex_match(input, std::regex("(exit)")))
 }
 
+void DirectoryBrowser::RenderEntry(DirectoryEntry* d, float mouseX, float mouseY, LeftMouseState* state )
+{
+	Text t = d->text;
+	if(t.Contains(GetNormMCoords(mouseX, mouseY)))
+	{
+		if(*state == FIRST_UP)
+		{
+			t.color = glm::vec4(0.7f, 0.7f, 0.7f, 1.0f);
+			HandleCLickedEntry(*d);
+		}
+		else if(*state == FIRST_DOWN || *state == DOWN)
+		{
+			t.color = glm::vec4(0.4f, 0.4f, 0.4f, 1.0f);
+		}
+		else if(*state == UP)
+		{
+			t.color = glm::vec4(0.7f, 0.7f, 0.7f, 1.0f);
+		}
+	}
+	else
+		t.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	textRenderer->RenderText(t);
+}
 
 void DirectoryBrowser::DisplayDirContent()
 {
@@ -69,64 +103,51 @@ void DirectoryBrowser::DisplayDirContent()
 
 void DirectoryBrowser::Init( std::string dirPath, GameManager* gameManager, 
 							std::shared_ptr<GLUtils::Program> textProgram)
-							//unsigned int windowWidth, unsigned int windowHeight )
 {
 	this->gameManager = gameManager;
 	textRenderer = std::make_shared<TextRenderer>();
 	textRenderer->InitTextRenderer(textProgram);
-
+	textPosition = glm::vec2(-1.0f, 0.9f);
 	PaddingY = 2.0f/WH();
+	previousState = UP;
+	
+	PopBack.text = textRenderer->GenerateText("..//", "calibri", textPosition.x, textPosition.y, ScaleX(0.8f), ScaleY(0.8f), glm::vec4(1));
+	PopBack.extension = "pop";
+	
 	PushNewDirectory(dirPath);
+	
 }
 
-void DirectoryBrowser::EnterConsoleMode()
-{
-	//std::cout << "\n\nEntered console-mode. Enter a command, or type 'help'." << std::endl;
-	//bool consoleMode = true;
-
-	////Processing input from the console while consoleMode is true.
-	////This will be the case until exit is typed by user, or a model is loaded.
-	//while(consoleMode)
-	//{
-	//	std::cout << "\\>";
-	//	std::string input;
-	//	std::getline(std::cin, input);
-	//	if(std::regex_match(input, std::regex("(exit)")))
-	//	{
-	//		consoleMode = false;
-	//		break;
-	//	}
-	//	consoleMode = !ProcessInput(input);
-	//	std::cout << std::endl;
-	//}
-	//std::cout << "\n\nExited console-mode. You may resume using the model viewer." << std::endl;
-}
 
 void DirectoryBrowser::PushNewDirectory( path newDir )
 {
-	/*testText = textRenderer->GenerateText("test text", "calibri", -1, 0, 2.0f/gameManager->WindowWidth(),
-	2.0f/gameManager->WindowHeight(), glm::vec4(1.0f));*/
-	std::vector<Text> v;
+	std::vector<DirectoryEntry> v;
 	directory_iterator end;
 
 	try	{
 		if(exists(newDir)){
-			float yOff = 0.0f;
+			float yOff = PopBack.text.h + PaddingY; 
 			for(directory_iterator iter(newDir); iter != end; ++iter){
 				path p = *iter;
-				
+				if(v.size()>0)
+					yOff += v.front().text.h + PaddingY;
 				if(is_regular_file(*iter)){
-					Text t;
-					float size = static_cast<float>(file_size(*iter));
-					
-					if(v.size()>0)
-						yOff += v.front().h + PaddingY;
-					t = textRenderer->GenerateText(p.string(), "calibri", -1.0f, 0.9f-yOff, 0.5f/WW(), 0.5f/WH(), glm::vec4(1));
+					DirectoryEntry t;
+					t.file_size = file_size(*iter);
+					t.extension = p.extension().string();
+					std::stringstream str;
+					str << p.string() << "   " << t.file_size << "KB";
+					t.text = textRenderer->GenerateText(str.str(), "calibri", -1.0f, 0.9f-yOff, ScaleX(0.8f), ScaleY(0.8f), glm::vec4(1));
+					t.p = p;
 					v.push_back(t);
 				}
 				else if(is_directory(*iter))
 				{
-
+					DirectoryEntry t;
+					t.extension = "folder";
+					t.text = textRenderer->GenerateText(p.string()+"\\", "calibri", -1.0f, 0.9f-yOff, ScaleX(0.8f), ScaleY(0.8f), glm::vec4(1));
+					t.p = p;
+					v.push_back(t);
 				}
 
 			}
@@ -143,7 +164,7 @@ void DirectoryBrowser::PushNewDirectory( path newDir )
 
 void DirectoryBrowser::PopDirectory()
 {
-	if(DirStack.size() > 0)
+	if(DirStack.size() > 1)
 		DirStack.pop();
 }
 
@@ -155,4 +176,40 @@ unsigned int DirectoryBrowser::WW()
 unsigned int DirectoryBrowser::WH()
 {
 	return gameManager->WindowHeight();
+}
+
+float DirectoryBrowser::ScaleX(float scale)
+{
+	return scale/WW();
+}
+
+float DirectoryBrowser::ScaleY(float scale)
+{
+	return scale/WH();
+}
+
+glm::vec2 DirectoryBrowser::GetNormMCoords(float mouseX, float mouseY)
+{
+	float x = ((mouseX / static_cast<float>(WW()))*2.0f) - 1.0f;
+	float y = 1.0f - ((static_cast<float>(mouseY) / WH()) * 2.0f);
+
+	glm::vec2 coord = glm::vec2(x, y);
+
+	return coord;
+}
+
+void DirectoryBrowser::HandleCLickedEntry( DirectoryEntry& entry )
+{
+	if(aiIsExtensionSupported(entry.extension.c_str()))
+	{
+		gameManager->LoadModel(entry.p.string());
+	}
+	else if(entry.extension == "folder")
+	{
+		PushNewDirectory(entry.p);
+	}
+	else if(entry.extension == "pop");
+	{
+		PopDirectory();
+	}
 }

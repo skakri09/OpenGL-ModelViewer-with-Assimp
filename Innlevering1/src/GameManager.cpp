@@ -150,8 +150,9 @@ void GameManager::init()
 	createSimpleProgram();
 	createVAO();
 	dirBrowser.reset(new DirectoryBrowser());
-	dirBrowser->Init("models/buggy", this, prog_text);
-
+	dirBrowser->Init("models", this, prog_text);
+	mouseState = new LeftMouseState();
+	*mouseState = UP;
 	mouseX = mouseY = 0.0f;
 }
 
@@ -235,7 +236,7 @@ void GameManager::render()
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	
 	
-	dirBrowser->RenderDirectoryBrowser();
+	dirBrowser->RenderDirectoryBrowser(mouseX, mouseY, mouseState);
 	
 	CHECK_GL_ERROR();
 }
@@ -245,7 +246,7 @@ void GameManager::play()
 	bool doExit = false;
 	float fps = 0.0f;
 	float fpsTimer = 0.0f;
-	bool hasBeenInConsoleMode = false;
+	bool hasBeenDirBrowsingMode = false;
 	//SDL main loop
 	while (!doExit) 
 	{
@@ -262,9 +263,15 @@ void GameManager::play()
 				break;
 			case SDL_MOUSEBUTTONDOWN:
 				trackball.rotateBegin(event.motion.x, event.motion.y);
+				if(event.button.button == SDL_BUTTON_LEFT)
+					if(*mouseState != DOWN)
+						*mouseState = FIRST_DOWN;
 				break;
 			case SDL_MOUSEBUTTONUP:
 				trackball.rotateEnd(event.motion.x, event.motion.y);
+				if(event.button.button == SDL_BUTTON_LEFT)
+					if(*mouseState != UP)
+						*mouseState = FIRST_UP;
 				break;
 			case SDL_MOUSEMOTION:
 				mouseX = static_cast<float>(event.motion.x);
@@ -272,10 +279,10 @@ void GameManager::play()
 				trackball_view_matrix = trackball.rotate(event.motion.x, event.motion.y, 1.0f);
 				break;
 			case SDL_KEYDOWN:
-				if(event.key.keysym.sym == SDLK_TAB && hasBeenInConsoleMode == false)
+				if(event.key.keysym.sym == SDLK_TAB && hasBeenDirBrowsingMode == false)
 				{
-					hasBeenInConsoleMode = true;
-					std::cout << dirBrowser->ToggleDirectoryBrowser() << std::endl;
+					hasBeenDirBrowsingMode = true;
+					dirBrowser->ToggleDirectoryBrowser();
 				}
 				if (event.key.keysym.sym == SDLK_ESCAPE) //Esc
 					doExit = true;
@@ -290,7 +297,7 @@ void GameManager::play()
 				break;
 			case SDL_KEYUP:
 				if(event.key.keysym.sym == SDLK_TAB)
-					hasBeenInConsoleMode = false;
+					hasBeenDirBrowsingMode = false;
 				break;
 			case SDL_QUIT: //e.g., user clicks the upper right x	
 				doExit = true;
@@ -447,15 +454,7 @@ void GameManager::RenderHiddenLine(glm::mat4 view_matrix_new)
 	}
 }
 
-glm::vec2 GameManager::GetNormMCoords()
-{
-	float x = ((mouseX / static_cast<float>(window_width))*2.0f) - 1.0f;
-	float y = 1.0f - ((static_cast<float>(mouseY) / window_height) * 2.0f);
 
-	glm::vec2 coord = glm::vec2(x, y);
-
-	return coord;
-}
 
 
 

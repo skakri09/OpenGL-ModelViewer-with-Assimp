@@ -64,7 +64,7 @@ struct Text
 	float y;
 	float w;
 	float h;
-
+	std::string text;
 	bool Contains(glm::vec2 normalizedMouseCoords)
 	{
 		if(normalizedMouseCoords.x > x

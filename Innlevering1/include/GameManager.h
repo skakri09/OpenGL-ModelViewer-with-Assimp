@@ -22,6 +22,7 @@
 
 //class FileHandler;//<forward declaration for FileHandler class
 class DirectoryBrowser;
+enum LeftMouseState;
 class GameManager 
 {
 public:
@@ -128,8 +129,6 @@ private:
 
 	void RenderHiddenLine(glm::mat4 view_matrix_new);
 
-	glm::vec2 GetNormMCoords();
-
 	GLuint vao; //< Vertex array object
 	
 	//The various shader programs we can use
@@ -170,6 +169,8 @@ private:
 	glm::vec4 backgroundColor;//<the color openGL clears the background with each update
 
 	float mouseX, mouseY;
+
+	LeftMouseState* mouseState;
 };
 
 #endif // _GAMEMANAGER_H_

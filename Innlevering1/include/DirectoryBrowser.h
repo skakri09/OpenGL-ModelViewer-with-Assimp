@@ -16,15 +16,30 @@
 #include <iomanip>
 #include <stack>
 
+#include <assimp/cimport.h>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 using namespace boost::filesystem;
 #include "GameManager.h"
 #include "TextRenderer.h"
 
 class GameManager;
 
-struct DirectoryContent
+enum LeftMouseState
 {
+	UP,
+	FIRST_UP,
+	DOWN,
+	FIRST_DOWN,
+};
 
+struct DirectoryEntry
+{
+	Text text;
+	path p;
+	std::string extension;
+	boost::uintmax_t file_size;
 };
 
 class DirectoryBrowser
@@ -35,7 +50,7 @@ public:
 	
 	bool ToggleDirectoryBrowser(){ showDirBrowser = !showDirBrowser; return showDirBrowser;}
 
-	void RenderDirectoryBrowser();
+	void RenderDirectoryBrowser(float mouseX, float mouseY, LeftMouseState* state);
 
 	/*
 	* Initializes the param path as the filehandlers directory.
@@ -55,18 +70,23 @@ public:
 	* Start console mode. Will route all input updates to this class until
 	* console mode is ended by user typing exit, or a new model being loaded.
 	*/
-	void EnterConsoleMode();
 
 protected:
 
 private:
 	bool showDirBrowser;
 
-	std::stack<std::vector<Text>> DirStack;
+	std::stack<std::vector<DirectoryEntry>> DirStack;
 	
 	void PushNewDirectory(path newDir);
 	
 	void PopDirectory();
+
+	glm::vec2 GetNormMCoords(float mouseX, float mouseY);
+
+	void HandleCLickedEntry(DirectoryEntry& entry);
+
+	void RenderEntry(DirectoryEntry* d, float mouseX, float mouseY, LeftMouseState* state);
 
 	path curDir, baseDir; //< boost directory paths
 
@@ -78,8 +98,15 @@ private:
 
 	unsigned int WW();
 	unsigned int WH();
-	
+	float ScaleX(float scale);
+	float ScaleY(float scale);
+
 	float PaddingY;
+	LeftMouseState previousState;
+
+	DirectoryEntry PopBack;
+	DirectoryEntry ParentDir;
+	glm::vec2 textPosition;
 };
 
 #endif // DirecotryBrowser_h__
