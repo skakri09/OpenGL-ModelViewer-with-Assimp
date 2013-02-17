@@ -13,6 +13,7 @@
 #include "VirtualTrackball.h"
 
 #include "FileHandler.h"
+#include "TextRenderer.h"
 
 /**
  * This class handles the game logic and display.
@@ -124,6 +125,10 @@ private:
 
 	void UpdateAttripPtrs();
 
+	void RenderHiddenLine(glm::mat4 view_matrix_new);
+
+	glm::vec2 GetNormMCoords();
+
 	GLuint vao; //< Vertex array object
 	
 	//The various shader programs we can use
@@ -133,16 +138,17 @@ private:
 	std::shared_ptr<GLUtils::Program> prog_wireframe;
 	std::shared_ptr<GLUtils::Program> prog_hiddenLine;
 	std::shared_ptr<GLUtils::Program> prog_textured;
+	std::shared_ptr<GLUtils::Program> prog_text;
 
 	/*
 	* Helper function to create a shader program. The two parameters are paths to the shader txt files
 	*/
-	std::shared_ptr<GLUtils::Program> createProgram(std::string vs_path, std::string fs_Path);
+	std::shared_ptr<GLUtils::Program> createProgram(std::string vs_path, std::string fs_Path, bool setProjM = true);
 
 	std::shared_ptr<Model> model; //< The currently loaded model
 
 	Timer my_timer; //< Timer for machine independent motion
-
+	float deltaTime;//< Game deltatime variable
 	glm::mat4 projection_matrix; //< OpenGL projection matrix
 	glm::mat4 model_matrix; //< OpenGL model transformation matrix
 	glm::mat4 view_matrix; //< OpenGL camera/view matrix
@@ -161,6 +167,10 @@ private:
 	std::shared_ptr<FileHandler> fileHandler;
 
 	glm::vec4 backgroundColor;//<the color openGL clears the background with each update
+
+	std::shared_ptr<TextRenderer> textRenderer;
+	glm::vec4 texcolor;
+	float mouseX, mouseY;
 };
 
 #endif // _GAMEMANAGER_H_

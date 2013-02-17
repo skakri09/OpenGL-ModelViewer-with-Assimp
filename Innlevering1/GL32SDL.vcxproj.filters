@@ -16,6 +16,9 @@
     <Filter Include="Header Files\GLUtils">
       <UniqueIdentifier>{a2d5147c-9fab-4da4-975c-585ba7e63a12}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{271770ee-387d-47bd-981a-ff0fbe839fdf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\GameManager.h">
@@ -48,6 +51,12 @@
     <ClInclude Include="include\TextureFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\TextRenderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DirectoryBrowser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GameManager.cpp">
@@ -68,37 +77,49 @@
     <ClCompile Include="src\TextureFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\TextRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DirectoryBrowser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\phong.frag">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="shaders\phong.vert">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="shaders\flat.vert">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="shaders\flat.frag">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="shaders\hidden_line.frag">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="shaders\hidden_line.vert">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="shaders\wireframe.frag">
-      <Filter>Resource Files</Filter>
+      <Filter>Shaders</Filter>
     </None>
     <None Include="shaders\wireframe.vert">
-      <Filter>Resource Files</Filter>
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\flat.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\hidden_line.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\hidden_line.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\phong.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\phong.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\text.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\text.vert">
+      <Filter>Shaders</Filter>
     </None>
     <None Include="shaders\textured.frag">
-      <Filter>Resource Files</Filter>
+      <Filter>Shaders</Filter>
     </None>
     <None Include="shaders\textured.vert">
-      <Filter>Resource Files</Filter>
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\wireframe.frag">
+      <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
 </Project>

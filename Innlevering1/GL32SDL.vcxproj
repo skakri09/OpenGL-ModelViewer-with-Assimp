@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\DirectoryBrowser.h" />
     <ClInclude Include="include\FileHandler.h" />
     <ClInclude Include="include\GameException.h" />
     <ClInclude Include="include\GameManager.h" />
@@ -18,15 +19,18 @@
     <ClInclude Include="include\GLUtils\Program.hpp" />
     <ClInclude Include="include\GLUtils\VBO.hpp" />
     <ClInclude Include="include\Model.h" />
+    <ClInclude Include="include\TextRenderer.h" />
     <ClInclude Include="include\TextureFactory.h" />
     <ClInclude Include="include\Timer.h" />
     <ClInclude Include="include\VirtualTrackball.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\DirectoryBrowser.cpp" />
     <ClCompile Include="src\FileHandler.cpp" />
     <ClCompile Include="src\GameManager.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Model.cpp" />
+    <ClCompile Include="src\TextRenderer.cpp" />
     <ClCompile Include="src\TextureFactory.cpp" />
     <ClCompile Include="src\VirtualTrackball.cpp" />
   </ItemGroup>
@@ -37,6 +41,8 @@
     <None Include="shaders\hidden_line.vert" />
     <None Include="shaders\phong.frag" />
     <None Include="shaders\phong.vert" />
+    <None Include="shaders\text.frag" />
+    <None Include="shaders\text.vert" />
     <None Include="shaders\textured.frag" />
     <None Include="shaders\textured.vert" />
     <None Include="shaders\wireframe.frag" />
@@ -91,7 +97,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>assimp.lib;SDL.lib;SDLmain.lib;opengl32.lib;glu32.lib;glew32.lib;DevIL.lib;ILU.lib;ILUT.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>assimp.lib;SDL.lib;SDLmain.lib;opengl32.lib;glu32.lib;glew32.lib;DevIL.lib;ILU.lib;ILUT.lib;freetype2410_D.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(PG612_GLEW_LIB_PATH);$(PG612_ASSIMP_LIB_PATH);$(PG612_SDL_LIB_PATH);$(PG612_BOOST_LIB_PATH);$(PG612_DEVIL_LIB_PATH);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>

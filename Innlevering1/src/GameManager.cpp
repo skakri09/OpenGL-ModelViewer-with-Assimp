@@ -9,7 +9,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
+#include <SDL_video.h>
 using std::cerr;
 using std::endl;
 using GLUtils::VBO;
@@ -98,6 +98,10 @@ void GameManager::createSimpleProgram()
 	prog_wireframe = createProgram("shaders/wireframe.vert", "shaders/wireframe.frag");
 	prog_hiddenLine = createProgram("shaders/hidden_line.vert", "shaders/hidden_line.frag");
 	prog_textured = createProgram("shaders/textured.vert", "shaders/textured.frag");
+	
+	prog_text = createProgram("shaders/text.vert", "shaders/text.frag", false);
+	textRenderer = std::make_shared<TextRenderer>();
+	textRenderer->InitTextRenderer(prog_text);
 
 	renderMode = RENDERMODE_TEXTURED;
 	oldRenderMode = NONE;
@@ -151,6 +155,7 @@ void GameManager::init()
 	fileHandler.reset(new FileHandler());
 	fileHandler->DisplayHelp();
 	fileHandler->InitFileHandler("models", this);
+	mouseX = mouseY = 0.0f;
 }
 
 void GameManager::renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<Program>& program, 
@@ -205,48 +210,49 @@ void GameManager::render()
 {
 	//Clear screen, and set the correct program
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+	
 	glm::mat4 view_matrix_new = view_matrix*trackball_view_matrix;
 
 	//Render geometry
 	glBindVertexArray(vao);
 	current_program->use();
+	
 	UpdateAttripPtrs();
 
 	glUniformMatrix4fv(current_program->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
 	
-	//IF its hidden_line rendermode, we do some polygon offset stuff here and in the next if check below
-	if(renderMode == RENDERMODE_HIDDEN_LINE)
-	{
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glEnable (GL_POLYGON_OFFSET_FILL);
-		glPolygonOffset(1.0f, 4.4f);
-		glUniform4fv(current_program->getUniform("rendering_color"), 1, glm::value_ptr(backgroundColor));
-	}
-
-	renderMeshRecursive(model->getMesh(), current_program, view_matrix_new, model_matrix, renderMode);
-	
-	//Rendering the model a second time with some polygon offset magic if its hidden_line rendering
-	if(renderMode == RENDERMODE_HIDDEN_LINE)
-	{
-		glDisable(GL_POLYGON_OFFSET_FILL);
-
-		glUniform4fv(current_program->getUniform("rendering_color"), 1, glm::value_ptr(glm::vec4(1.0f, 0.6f, 0.1f, 1.0f)));
-		glEnable (GL_POLYGON_OFFSET_LINE);
+	if(renderMode == RENDERMODE_HIDDEN_LINE || renderMode == RENDERMODE_WIREFRAME)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		glPolygonOffset(0.0f, 0.0f);
-		renderMeshRecursive(model->getMesh(), current_program, view_matrix_new, model_matrix, renderMode);
-		glDisable(GL_POLYGON_OFFSET_LINE);
-	}
+	else
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+	if(renderMode == RENDERMODE_HIDDEN_LINE)
+		RenderHiddenLine(view_matrix_new);
+	else
+		renderMeshRecursive(model->getMesh(), current_program, view_matrix_new, model_matrix, renderMode);
+	
 	current_program->disuse();
 	glBindVertexArray(0);
+	
+	if(renderMode == RENDERMODE_HIDDEN_LINE || renderMode == RENDERMODE_WIREFRAME)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	
+	if(textRenderer->RenderText("Hello World", "calibri", -1, 0, 2.0f/window_width, 
+		2.0f/window_width, texcolor).Contains(GetNormMCoords()))
+	{
+		texcolor = glm::vec4(0.5f);
+	}
+	else texcolor = glm::vec4(1);
+
+	textRenderer->RenderText("Hello World", "calibri", -1, 0.1f, 2.0f/window_width, 2.0f/window_width, glm::vec4(1));
 	CHECK_GL_ERROR();
 }
 
 void GameManager::play() 
 {
 	bool doExit = false;
+	float fps = 0.0f;
+	float fpsTimer = 0.0f;
 	//SDL main loop
 	while (!doExit) 
 	{
@@ -270,6 +276,8 @@ void GameManager::play()
 				trackball.rotateEnd(event.motion.x, event.motion.y);
 				break;
 			case SDL_MOUSEMOTION:
+				mouseX = event.motion.x;
+				mouseY = event.motion.y;
 				trackball_view_matrix = trackball.rotate(event.motion.x, event.motion.y, 1.0f);
 				break;
 			case SDL_KEYDOWN:
@@ -297,6 +305,19 @@ void GameManager::play()
 		//Render, and swap front and back buffers
 		render();
 		SDL_GL_SwapWindow(main_window);
+
+
+		deltaTime = static_cast<float>(my_timer.elapsedAndRestart());
+		fpsTimer += deltaTime;
+		if(fpsTimer >= 0.3f)//updating the fps counter once every .3sec
+		{
+			fps = 1/deltaTime;
+			std::ostringstream captionStream;		
+			captionStream << "FPS: " << fps;
+			SDL_SetWindowTitle(main_window, captionStream.str().c_str());
+			fps = 0;
+			fpsTimer = 0;
+		}
 	}
 	quit();
 }
@@ -343,17 +364,14 @@ void GameManager::DetermineRenderMode(SDL_Keycode keyCode)
 	case SDLK_1:
 		renderMode = RENDERMODE_PHONG;
 		current_program = prog_phong;
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		break;
 	case SDLK_2:
 		renderMode = RENDERMODE_FLAT;
 		current_program = prog_flat;
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		break;
 	case SDLK_3:
 		renderMode = RENDERMODE_WIREFRAME;
 		current_program = prog_wireframe;
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		break;
 	case SDLK_4:
 		renderMode = RENDERMODE_HIDDEN_LINE;
@@ -362,12 +380,11 @@ void GameManager::DetermineRenderMode(SDL_Keycode keyCode)
 	case SDLK_5:
 		renderMode = RENDERMODE_TEXTURED;
 		current_program = prog_textured;
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		break;
 	}
 }
 
-std::shared_ptr<GLUtils::Program> GameManager::createProgram( std::string vs_path, std::string fs_Path)
+std::shared_ptr<GLUtils::Program> GameManager::createProgram( std::string vs_path, std::string fs_Path, bool setProjM)
 {
 	std::shared_ptr<GLUtils::Program> program;
 	std::string fs_src = readFile(fs_Path);
@@ -378,7 +395,8 @@ std::shared_ptr<GLUtils::Program> GameManager::createProgram( std::string vs_pat
 
 	//Set uniforms for the program.
 	program->use();
-	glUniformMatrix4fv(program->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
+	if(setProjM)
+		glUniformMatrix4fv(program->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
 	program->disuse();
 	return program;
 }
@@ -393,6 +411,8 @@ void GameManager::UpdateAttripPtrs()
 	if(oldRenderMode != renderMode)
 	{
 		oldRenderMode = renderMode;	
+		model->getInterleavedVBO()->bind();
+		model->getIndexesVBO()->bindIndexes();
 		current_program->setAttributePointer("position", 3, GL_FLOAT, GL_FALSE, model->getStride(), model->getVerticeOffset());
 
 		if(renderMode == RENDERMODE_PHONG || renderMode == RENDERMODE_FLAT || renderMode == RENDERMODE_TEXTURED)
@@ -404,5 +424,46 @@ void GameManager::UpdateAttripPtrs()
 		}
 	}
 }
+
+void GameManager::RenderHiddenLine(glm::mat4 view_matrix_new)
+{
+	//IF its hidden_line rendermode, we do some polygon offset stuff here and in the next if check below
+	if(renderMode == RENDERMODE_HIDDEN_LINE)
+	{
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glEnable (GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(1.0f, 4.4f);
+		glUniform4fv(current_program->getUniform("rendering_color"), 1, glm::value_ptr(backgroundColor));
+	}
+
+	renderMeshRecursive(model->getMesh(), current_program, view_matrix_new, model_matrix, renderMode);
+
+	//Rendering the model a second time with some polygon offset magic if its hidden_line rendering
+	if(renderMode == RENDERMODE_HIDDEN_LINE)
+	{
+		glDisable(GL_POLYGON_OFFSET_FILL);
+
+		glUniform4fv(current_program->getUniform("rendering_color"), 1, glm::value_ptr(glm::vec4(1.0f, 0.6f, 0.1f, 1.0f)));
+		glEnable (GL_POLYGON_OFFSET_LINE);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glPolygonOffset(0.0f, 0.0f);
+		renderMeshRecursive(model->getMesh(), current_program, view_matrix_new, model_matrix, renderMode);
+		glDisable(GL_POLYGON_OFFSET_LINE);
+	}
+}
+
+glm::vec2 GameManager::GetNormMCoords()
+{
+	float x = ((mouseX / static_cast<float>(window_width))*2.0f) - 1.0f;
+	float y = 1.0f - ((static_cast<float>(mouseY) / window_height) * 2.0f);
+
+	glm::vec2 coord = glm::vec2(x, y);
+
+	std::cout << "x: " << x << " y: " << y<< std::endl;
+
+	return coord;
+}
+
+
 
 

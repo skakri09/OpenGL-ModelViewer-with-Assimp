@@ -41,7 +41,11 @@ public:
 	  */
 	void setWindowSize(int w, int h);
 
+	
+
+
 private:
+
 	/**
 	  * Returns the normalized (x=[-0.5, 0.5], y=[-0.5, 0.5]) window
 	  * coordinates from absolute window coordinates (x=[0, w], y=[0, h]).
