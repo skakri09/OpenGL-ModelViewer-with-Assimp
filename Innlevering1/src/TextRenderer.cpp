@@ -122,7 +122,8 @@ void TextRenderer::InitTextRenderer( std::shared_ptr<Program> textProgram )
 	CreateAndStoreFontAtlas("fonts/calibri.ttf", "calibri", 60);
 }
 
-TextRect TextRenderer::RenderText( std::string text, std::string font, float xPos, float yPos, 
+
+Text TextRenderer::RenderText( std::string text, std::string font, float xPos, float yPos, 
 								float scaleX, float scaleY, glm::vec4 color )
 {
 	std::shared_ptr<font_atlas> atlas = GetFontAtlas(font);
@@ -135,7 +136,9 @@ TextRect TextRenderer::RenderText( std::string text, std::string font, float xPo
 	std::vector<float> coords;
 	coords.resize(text.length() * 6 * 4);
 
-	TextRect rect(xPos + atlas->characters[text.at(0)].bl * scaleX, yPos);// + atlas->characters[text.at(0)].bt * scaleY);
+	Text rect;
+	rect.x = xPos + atlas->characters[text.at(0)].bl * scaleX;
+	rect.y = yPos;
 	int count = 0;
 	for(unsigned int i = 0; i < text.length(); i++){
 		unsigned char c = text.at(i);
@@ -187,9 +190,10 @@ TextRect TextRenderer::RenderText( std::string text, std::string font, float xPo
 		coords[count++] = atlas->characters[c].ty + atlas->characters[c].bh / atlas->height;
 	}
 	rect.w = xPos - rect.x;
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	rect.vbo.reset(new GLUtils::VBO(coords.data(), coords.size()*sizeof(float)));
+	rect.color = color;
+	rect.atlas = atlas;
+	rect.count = count;
 
 	glBindVertexArray(vao);
 
@@ -198,16 +202,49 @@ TextRect TextRenderer::RenderText( std::string text, std::string font, float xPo
 	program->setAttributePointer("in_Position", 4);
 	
 	glUniform4f(program->getUniform("color"), color.r, color.g, color.b, color.a);
-	glDrawArrays(GL_TRIANGLES, 0, count / 4);
 
+	//glDrawArrays(GL_TRIANGLES, 0, count / 4);
 
 	glBindVertexArray(0);
-	glDisable(GL_BLEND);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	program->disuse();
 
 	CHECK_GL_ERROR();
 	return rect;
+}
+
+void TextRenderer::RenderText( Text text )
+{
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, text.atlas->texID);
+
+	program->use();
+	glUniform1i(program->getUniform("tex"), 0);
+
+	glBindVertexArray(vao);
+
+	text.vbo->bind();
+	
+	program->setAttributePointer("in_Position", 4);
+
+	glUniform4fv(program->getUniform("color"), 1,  glm::value_ptr(text.color));
+	glDrawArrays(GL_TRIANGLES, 0, text.count / 4);
+
+
+	glBindVertexArray(0);
+	glDisable(GL_BLEND);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	text.vbo->unbind();
+}
+
+Text TextRenderer::GenerateText( std::string text, std::string font, float xPos, float yPos, float scaleX, float scaleY, glm::vec4 color )
+{
+	Text newText = RenderText(text, font, xPos, yPos, scaleX, scaleY, color);
+
+	return newText;
 }
 
 std::shared_ptr<font_atlas> TextRenderer::GetFontAtlas( std::string key )

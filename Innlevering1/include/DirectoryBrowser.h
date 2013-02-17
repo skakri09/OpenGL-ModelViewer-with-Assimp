@@ -14,27 +14,37 @@
 #include <string>
 #include <iostream>
 #include <iomanip>
+#include <stack>
+
 using namespace boost::filesystem;
 #include "GameManager.h"
+#include "TextRenderer.h"
+
 class GameManager;
+
+struct DirectoryContent
+{
+
+};
 
 class DirectoryBrowser
 {
 public:
     DirectoryBrowser();
     ~DirectoryBrowser();
+	
+	bool ToggleDirectoryBrowser(){ showDirBrowser = !showDirBrowser; return showDirBrowser;}
+
+	void RenderDirectoryBrowser();
 
 	/*
 	* Initializes the param path as the filehandlers directory.
 	* If the string is a successful path, it's content will be
 	* written out to the console.
 	*/
-	void InitFileHandler(std::string dirPath, GameManager* gameManager);
-
-	/*
-	* Writes the help dialog in the console window
-	*/
-	void DisplayHelp();
+	void Init(std::string dirPath, GameManager* gameManager,
+			  std::shared_ptr<GLUtils::Program>textProgram);
+			  //unsigned int windowWidth, unsigned int windowHeight);
 
 	/*
 	* Writes the content of the model directory to console
@@ -50,20 +60,26 @@ public:
 protected:
 
 private:
-	std::string helpString; //< the string containing the help dialogue
+	bool showDirBrowser;
 
+	std::stack<std::vector<Text>> DirStack;
 	
+	void PushNewDirectory(path newDir);
+	
+	void PopDirectory();
+
 	path curDir, baseDir; //< boost directory paths
 
 	//pointer to the GameManager object, allowing for files
 	//to be loaded trough the propper channels
 	GameManager* gameManager;
 
-	//Handles the input string from the console. Returns true if we should
-	//quit console mode, true if console mode should stop.
-	bool ProcessInput(std::string input);
+	std::shared_ptr<TextRenderer> textRenderer;
 
-
+	unsigned int WW();
+	unsigned int WH();
+	
+	float PaddingY;
 };
 
 #endif // DirecotryBrowser_h__

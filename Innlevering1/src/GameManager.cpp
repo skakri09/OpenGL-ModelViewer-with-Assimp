@@ -98,11 +98,8 @@ void GameManager::createSimpleProgram()
 	prog_wireframe = createProgram("shaders/wireframe.vert", "shaders/wireframe.frag");
 	prog_hiddenLine = createProgram("shaders/hidden_line.vert", "shaders/hidden_line.frag");
 	prog_textured = createProgram("shaders/textured.vert", "shaders/textured.frag");
-	
 	prog_text = createProgram("shaders/text.vert", "shaders/text.frag", false);
-	textRenderer = std::make_shared<TextRenderer>();
-	textRenderer->InitTextRenderer(prog_text);
-
+	
 	renderMode = RENDERMODE_TEXTURED;
 	oldRenderMode = NONE;
 	current_program = prog_textured;	
@@ -152,9 +149,9 @@ void GameManager::init()
 	createMatrices();
 	createSimpleProgram();
 	createVAO();
-	fileHandler.reset(new FileHandler());
-	fileHandler->DisplayHelp();
-	fileHandler->InitFileHandler("models", this);
+	dirBrowser.reset(new DirectoryBrowser());
+	dirBrowser->Init("models/buggy", this, prog_text);
+
 	mouseX = mouseY = 0.0f;
 }
 
@@ -237,14 +234,9 @@ void GameManager::render()
 	if(renderMode == RENDERMODE_HIDDEN_LINE || renderMode == RENDERMODE_WIREFRAME)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	
-	if(textRenderer->RenderText("Hello World", "calibri", -1, 0, 2.0f/window_width, 
-		2.0f/window_width, texcolor).Contains(GetNormMCoords()))
-	{
-		texcolor = glm::vec4(0.5f);
-	}
-	else texcolor = glm::vec4(1);
-
-	textRenderer->RenderText("Hello World", "calibri", -1, 0.1f, 2.0f/window_width, 2.0f/window_width, glm::vec4(1));
+	
+	dirBrowser->RenderDirectoryBrowser();
+	
 	CHECK_GL_ERROR();
 }
 
@@ -253,11 +245,10 @@ void GameManager::play()
 	bool doExit = false;
 	float fps = 0.0f;
 	float fpsTimer = 0.0f;
+	bool hasBeenInConsoleMode = false;
 	//SDL main loop
 	while (!doExit) 
 	{
-		bool hasBeenInConsoleMode = false;
-		
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) 
 		{// poll for pending events
@@ -276,15 +267,15 @@ void GameManager::play()
 				trackball.rotateEnd(event.motion.x, event.motion.y);
 				break;
 			case SDL_MOUSEMOTION:
-				mouseX = event.motion.x;
-				mouseY = event.motion.y;
+				mouseX = static_cast<float>(event.motion.x);
+				mouseY = static_cast<float>(event.motion.y);
 				trackball_view_matrix = trackball.rotate(event.motion.x, event.motion.y, 1.0f);
 				break;
 			case SDL_KEYDOWN:
-				if(event.key.keysym.sym == SDLK_RETURN && !hasBeenInConsoleMode)
+				if(event.key.keysym.sym == SDLK_TAB && hasBeenInConsoleMode == false)
 				{
 					hasBeenInConsoleMode = true;
-					fileHandler->EnterConsoleMode();
+					std::cout << dirBrowser->ToggleDirectoryBrowser() << std::endl;
 				}
 				if (event.key.keysym.sym == SDLK_ESCAPE) //Esc
 					doExit = true;
@@ -296,6 +287,10 @@ void GameManager::play()
 				if(event.key.keysym.sym == SDLK_PAGEDOWN)
 					ZoomOut();
 				DetermineRenderMode(event.key.keysym.sym);
+				break;
+			case SDL_KEYUP:
+				if(event.key.keysym.sym == SDLK_TAB)
+					hasBeenInConsoleMode = false;
 				break;
 			case SDL_QUIT: //e.g., user clicks the upper right x	
 				doExit = true;
@@ -458,8 +453,6 @@ glm::vec2 GameManager::GetNormMCoords()
 	float y = 1.0f - ((static_cast<float>(mouseY) / window_height) * 2.0f);
 
 	glm::vec2 coord = glm::vec2(x, y);
-
-	std::cout << "x: " << x << " y: " << y<< std::endl;
 
 	return coord;
 }

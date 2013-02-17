@@ -1,6 +1,6 @@
 #ifndef _GAMEMANAGER_H_
 #define _GAMEMANAGER_H_
-
+#pragma warning( disable : 4345 )
 #include <memory>
 
 #include <GL/glew.h>
@@ -13,16 +13,15 @@
 #include "VirtualTrackball.h"
 
 #include "FileHandler.h"
-#include "TextRenderer.h"
-
+#include "DirectoryBrowser.h"
 /**
  * This class handles the game logic and display.
  * Uses SDL as the display manager, and glm for 
  * vector and matrix computations
  */
 
-class FileHandler;//<forward declaration for FileHandler class
-
+//class FileHandler;//<forward declaration for FileHandler class
+class DirectoryBrowser;
 class GameManager 
 {
 public:
@@ -68,6 +67,8 @@ public:
 	*/
 	void LoadModel(std::string fullFilePath);
 
+	unsigned int WindowWidth(){return window_width;}
+	unsigned int WindowHeight(){return window_height;}
 protected:
 
 	/**
@@ -164,12 +165,10 @@ private:
 	std::string modelToLoad;
 
 	//the FileHandler object handles input for file loading from the console window
-	std::shared_ptr<FileHandler> fileHandler;
+	std::shared_ptr<DirectoryBrowser> dirBrowser;
 
 	glm::vec4 backgroundColor;//<the color openGL clears the background with each update
 
-	std::shared_ptr<TextRenderer> textRenderer;
-	glm::vec4 texcolor;
 	float mouseX, mouseY;
 };
 

@@ -26,6 +26,7 @@
 #include "GLUtils/GlUtils.hpp"
 #include "GameException.h"
 #include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 using std::cerr;
 using std::endl;
 using GLUtils::VBO;
@@ -53,13 +54,11 @@ struct font_atlas
 	} characters[255];
 };
 
-struct TextRect
+struct Text
 {
-	TextRect(float x, float y)
+	Text()
 	{
-		this->x = x;
-		this->y = y;
-		w = h = 0.0f;
+		x = y = w = h = 0.0f;
 	}
 	float x;
 	float y;
@@ -76,6 +75,12 @@ struct TextRect
 
 		return false;
 	}
+	
+	glm::vec4 color;
+
+	std::shared_ptr<GLUtils::VBO> vbo;
+	std::shared_ptr<font_atlas> atlas;
+	int count;
 };
 
 
@@ -87,8 +92,14 @@ public:
 
 	void InitTextRenderer(std::shared_ptr<Program> textProgram);
 
-	TextRect RenderText(std::string text, std::string font, float xPos, float yPos, 
+	Text RenderText(std::string text, std::string font, float xPos, float yPos, 
 					float scaleX, float scaleY, glm::vec4 color);
+
+	void RenderText(Text text);
+
+	Text GenerateText(std::string text, std::string font, float xPos, float yPos, 
+		float scaleX, float scaleY, glm::vec4 color);
+
 protected:
 
 private:
@@ -98,6 +109,8 @@ private:
 	std::shared_ptr<Program> program;
 
 	void CreateAndStoreFontAtlas(std::string fontFilePath, std::string fontKey, FT_UInt fontSize);
+
+	std::shared_ptr<TextRenderer> textRenderer;
 
 	std::shared_ptr<GLUtils::VBO> vbo;
 
