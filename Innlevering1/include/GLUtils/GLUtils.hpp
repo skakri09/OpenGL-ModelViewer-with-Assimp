@@ -27,6 +27,17 @@ inline void checkGLErrors(const char* file, unsigned int line) {
 }
 #define CHECK_GL_ERROR() GLUtils::checkGLErrors(__FILE__, __LINE__)
 
+inline void checkGLFBOCompleteness(const char* file, unsigned int line) {
+	GLenum err = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (err != GL_FRAMEBUFFER_COMPLETE) {
+		std::stringstream log; 
+		log << file << '@' << line << ": FBO incomplete error:" 
+			<< std::hex << err << " " << gluErrorString(err); 
+		throw std::runtime_error(log.str()); 
+	}
+}
+#define CHECK_GL_FBO_COMPLETENESS() GLUtils::checkGLFBOCompleteness(__FILE__, __LINE__)
+
 
 inline std::string readFile(std::string file) {
 	int length;

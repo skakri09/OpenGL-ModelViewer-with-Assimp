@@ -88,6 +88,18 @@ void GameManager::createMatrices()
 	projection_matrix = glm::perspective(FoV,	window_width / (float) window_height, 1.0f, 10.f);
 	model_matrix = glm::scale(glm::mat4(1.0f), glm::vec3(3));
 	view_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f));
+
+	fbo_projectionMatrix = glm::mat4(1);
+	fbo_viewMatrix = glm::mat4(1);
+
+	fbo_modelMatrix = glm::mat4(1);
+
+	fbo_modelMatrix = glm::translate(fbo_modelMatrix, glm::vec3(0.7f, 0.7f, 0));
+	fbo_modelMatrix = glm::scale(fbo_modelMatrix, glm::vec3(0.3));
+
+	lightPosition = glm::vec3(2, 2, 2);
+	lightProjection = glm::perspective(FoV, window_width/(float)window_height, 1.0f, 10.0f);
+	lightView = glm::lookAt(lightPosition, glm::vec3(0), glm::vec3(0, 1, 0));
 }
 
 void GameManager::createSimpleProgram() 
@@ -99,7 +111,6 @@ void GameManager::createSimpleProgram()
 	prog_hiddenLine = createProgram("shaders/hidden_line.vert", "shaders/hidden_line.frag");
 	prog_textured = createProgram("shaders/textured.vert", "shaders/textured.frag");
 	prog_text = createProgram("shaders/text.vert", "shaders/text.frag", false);
-	
 	renderMode = RENDERMODE_TEXTURED;
 	oldRenderMode = NONE;
 	current_program = prog_textured;	
@@ -114,7 +125,7 @@ void GameManager::createVAO()
 		LoadModel(modelToLoad);
 	else
 		LoadModel("models/bunny.obj");
-}
+}	 
 
 void GameManager::LoadModel( std::string fullFilePath )
 {
@@ -149,6 +160,11 @@ void GameManager::init()
 	createMatrices();
 	createSimpleProgram();
 	createVAO();
+	
+	createFBOProgram();
+	createFBOVAO();
+	createFBO();
+	
 	dirBrowser.reset(new DirectoryBrowser());
 	dirBrowser->Init("models", this, prog_text);
 	mouseState = new LeftMouseState();
@@ -204,21 +220,82 @@ void GameManager::renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<Prog
 		renderMeshRecursive(mesh.children.at(i), program, view_matrix, meshpart_model_matrix, mode);
 }
 
+void GameManager::renderMeshRecursiveLight( MeshPart& mesh, const std::shared_ptr<GLUtils::Program>& program, 
+											const glm::mat4& view_matrix, const glm::mat4& model_matrix )
+{
+	//Create modelview matrix
+	glm::mat4 meshpart_model_matrix = model_matrix*mesh.transform;
+
+	glm::mat4 modelview_matrix = view_matrix*meshpart_model_matrix;
+	glUniformMatrix4fv(program->getUniform("modelview_matrix"), 1, 0, glm::value_ptr(modelview_matrix));
+
+	glDrawElements(GL_TRIANGLES, mesh.count, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * mesh.first));
+
+
+
+	for (unsigned int i=0; i<mesh.children.size(); ++i)
+		renderMeshRecursiveLight(mesh.children.at(i), program, view_matrix, meshpart_model_matrix);
+}
+
+
 void GameManager::render() 
 {
-	//Clear screen, and set the correct program
+	/*Rendering the lightPoV to our FBO*/
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-	glm::mat4 view_matrix_new = view_matrix*trackball_view_matrix;
+	RenderLightPoV();
 
+	CHECK_GL_ERROR();
+	/*Rendering the actual camera PoV to screen*/
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	RenderCamPoV();
+
+	CHECK_GL_ERROR();
+
+	/*Rendering a dump of the depthBuffer from the lightPoV*/
+	RenderDepthDump();
+
+	CHECK_GL_ERROR();
+	/*Rendering the directoryBrowser*/
+	dirBrowser->RenderDirectoryBrowser(mouseX, mouseY, mouseState);
+	
+	CHECK_GL_ERROR();
+}
+
+void GameManager::RenderLightPoV()
+{
+	glm::mat4 view_matrix_new = lightView*trackball_view_matrix;
+
+	glBindVertexArray(vao);
+	light_prog->use();
+
+	model->getInterleavedVBO()->bind();
+	model->getIndexesVBO()->bindIndexes();
+	light_prog->setAttributePointer("in_Position", 3, GL_FLOAT, GL_FALSE, model->getStride(), model->getVerticeOffset());
+
+	glUniformMatrix4fv(light_prog->getUniform("projection"), 1, 0, glm::value_ptr(lightProjection));
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	renderMeshRecursiveLight(model->getMesh(), light_prog, view_matrix_new, model_matrix);
+
+	light_prog->disuse();
+	glBindVertexArray(0);
+}
+
+
+void GameManager::RenderCamPoV()
+{
+	glm::mat4 view_matrix_new = view_matrix*trackball_view_matrix;
 	//Render geometry
 	glBindVertexArray(vao);
 	current_program->use();
-	
+
 	UpdateAttripPtrs();
 
 	glUniformMatrix4fv(current_program->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
-	
+
 	if(renderMode == RENDERMODE_HIDDEN_LINE || renderMode == RENDERMODE_WIREFRAME)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	else
@@ -228,17 +305,32 @@ void GameManager::render()
 		RenderHiddenLine(view_matrix_new);
 	else
 		renderMeshRecursive(model->getMesh(), current_program, view_matrix_new, model_matrix, renderMode);
-	
+
 	current_program->disuse();
 	glBindVertexArray(0);
-	
+
 	if(renderMode == RENDERMODE_HIDDEN_LINE || renderMode == RENDERMODE_WIREFRAME)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	
-	
-	dirBrowser->RenderDirectoryBrowser(mouseX, mouseY, mouseState);
-	
+}
+
+void GameManager::RenderDepthDump()
+{
+	fbo_program->use();
+
+	//Bind the textures before rendering
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, fbo_texture);
+
+	glBindVertexArray(fbo_vao);
+
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	CHECK_GL_ERROR();
+
+	//Unbind the textures
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void GameManager::play() 
@@ -410,7 +502,7 @@ void GameManager::SetModelToLoad( std::string modelPath )
 
 void GameManager::UpdateAttripPtrs()
 {
-	if(oldRenderMode != renderMode)
+	//if(oldRenderMode != renderMode)
 	{
 		oldRenderMode = renderMode;	
 		model->getInterleavedVBO()->bind();
@@ -453,6 +545,97 @@ void GameManager::RenderHiddenLine(glm::mat4 view_matrix_new)
 		glDisable(GL_POLYGON_OFFSET_LINE);
 	}
 }
+
+void GameManager::createFBOProgram()
+{
+	std::string vs_src = readFile("shaders/fbo.vert");
+	std::string fs_src = readFile("shaders/fbo.frag");
+
+	fbo_program.reset(new Program(vs_src, fs_src));
+	fbo_program->use();
+
+	glUniformMatrix4fv(fbo_program->getUniform("projection"), 1, 0, glm::value_ptr(fbo_projectionMatrix));
+	glUniformMatrix4fv(fbo_program->getUniform("view"), 1, 0, glm::value_ptr(fbo_viewMatrix));
+	glUniformMatrix4fv(fbo_program->getUniform("model_matrix"), 1, 0, glm::value_ptr(fbo_modelMatrix));
+	glUniform1i(fbo_program->getUniform("fbo_texture"), 0);
+	glUseProgram(0);
+	CHECK_GL_ERROR();
+
+	std::string vs_lsrc = readFile("shaders/lightPoV.vert");
+	std::string fs_lsrc = readFile("shaders/lightPoV.frag");
+	light_prog.reset(new Program(vs_lsrc, fs_lsrc));
+	light_prog->use();
+	glUniformMatrix4fv(light_prog->getUniform("projection"), 1, 0, glm::value_ptr(lightProjection));
+	light_prog->disuse();
+	CHECK_GL_ERROR();
+}
+
+void GameManager::createFBOVAO()
+{
+	glGenVertexArrays(1, &fbo_vao);
+	glBindVertexArray(fbo_vao);
+
+	static float positions[8] = {
+		-1.0, 1.0,
+		-1.0, -1.0,
+		1.0, 1.0,
+		1.0, -1.0,
+
+	};
+
+	glGenBuffers(1, &fbo_vertex_bo);
+	glBindBuffer(GL_ARRAY_BUFFER, fbo_vertex_bo);
+	glBufferData(GL_ARRAY_BUFFER, 4*2*sizeof(float), &positions[0], GL_STATIC_DRAW);
+
+	fbo_program->setAttributePointer("in_Position", 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void GameManager::createFBO()
+{
+	glGenTextures(1, &fbo_texture);
+	glBindTexture(GL_TEXTURE_2D, fbo_texture);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, window_width, window_height, 0, GL_RGBA, GL_FLOAT, NULL);
+
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, window_width, window_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, (void*)0);
+
+	glGenFramebuffers(1, &fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	glDrawBuffer(GL_NONE);
+	//glReadBuffer(GL_NONE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, fbo_texture, 0);
+
+	////depth render buffer
+	//glGenRenderbuffers(1, &fbo_depth);
+	//glBindRenderbuffer(GL_RENDERBUFFER, fbo_depth);
+	//glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, window_width, window_height);
+	//glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+	////create an fbo and attach texture and render buffer
+	//glGenFramebuffers(1, &fbo);
+	//glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbo_texture, 0);
+	//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fbo_depth);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	CHECK_GL_FBO_COMPLETENESS();
+}
+
+
+
+
 
 
 

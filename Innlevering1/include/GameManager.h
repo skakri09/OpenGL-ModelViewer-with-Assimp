@@ -20,7 +20,12 @@
  * vector and matrix computations
  */
 
-//class FileHandler;//<forward declaration for FileHandler class
+struct Light{
+	glm::vec3 position;
+	glm::mat4 projection;
+	glm::mat4 view;
+};
+
 class DirectoryBrowser;
 enum LeftMouseState;
 class GameManager 
@@ -108,6 +113,9 @@ protected:
 	void ZoomOut();
 
 private:
+	Light sceneLight;
+
+
 	enum RenderMode
 	{
 		RENDERMODE_PHONG,
@@ -121,7 +129,7 @@ private:
 	RenderMode renderMode, oldRenderMode;
 
 	static void renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<GLUtils::Program>& program, 
-									const glm::mat4& modelview, const glm::mat4& transform, RenderMode mode);
+									const glm::mat4& view_matrix, const glm::mat4& model_matrix, RenderMode mode);
 
 	void DetermineRenderMode(SDL_Keycode keyCode);
 
@@ -139,13 +147,17 @@ private:
 	std::shared_ptr<GLUtils::Program> prog_hiddenLine;
 	std::shared_ptr<GLUtils::Program> prog_textured;
 	std::shared_ptr<GLUtils::Program> prog_text;
-
+	std::shared_ptr<GLUtils::Program> fbo_program;
+	std::shared_ptr<GLUtils::Program> light_prog;
 	/*
 	* Helper function to create a shader program. The two parameters are paths to the shader txt files
 	*/
 	std::shared_ptr<GLUtils::Program> createProgram(std::string vs_path, std::string fs_Path, bool setProjM = true);
 
 	std::shared_ptr<Model> model; //< The currently loaded model
+	
+	std::shared_ptr<Model> scene; //< The Scene
+	glm::mat4 scene_model_matrix;
 
 	Timer my_timer; //< Timer for machine independent motion
 	float deltaTime;//< Game deltatime variable
@@ -154,7 +166,46 @@ private:
 	glm::mat4 view_matrix; //< OpenGL camera/view matrix
 	glm::mat3 normal_matrix; //< OpenGL matrix to transfor normals
 	glm::mat4 trackball_view_matrix; //< OpenGL camera matrix for the trackball
+
+	//Variables for the FBO 
+	GLuint fbo; //< Frame buffer object id
+	GLuint fbo_vao; //< Vertex array object for our FBO geometry (full-screen quad)
+	GLuint fbo_vertex_bo; //< Vetex buffer object for fullscreen quad
+	GLuint fbo_texture; //< framebuffer object color attachment (texture)
+	GLuint fbo_depth; //< framebuffer object depth attachment (renerbuffer)
+	glm::mat4 fbo_modelMatrix;
+	glm::mat4 fbo_projectionMatrix;
+	glm::mat4 fbo_viewMatrix;
 	
+	void RenderLightPoV();
+	void RenderCamPoV();
+	void RenderDepthDump();
+	
+	static void renderMeshRecursiveLight(MeshPart& mesh, const std::shared_ptr<GLUtils::Program>& program, 
+										const glm::mat4& view_matrix, const glm::mat4& model_matrix);
+
+	glm::vec3 lightPosition;
+	glm::mat4 lightProjection;
+	glm::mat4 lightView;
+
+	/**
+	 * Compiles, attaches, links, and sets uniforms for
+	 * the OpenGL program that renders the texture to the
+	 * fullscreen quad
+	 */
+	void createFBOProgram();
+	
+	/**
+	 * Creates vertex array objects for the fullscreen
+	 * quad used to render the FBO texture to screen
+	 */
+	void createFBOVAO();
+
+	/**
+	  * Creates the framebuffer object
+	  */
+	void createFBO();
+
 	VirtualTrackball trackball;
 	SDL_Window* main_window; //< Our window handle
 	SDL_GLContext main_context; //< Our opengl context handle 

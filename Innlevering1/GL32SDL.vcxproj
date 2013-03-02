@@ -35,10 +35,14 @@
     <ClCompile Include="src\VirtualTrackball.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\fbo.frag" />
+    <None Include="shaders\fbo.vert" />
     <None Include="shaders\flat.frag" />
     <None Include="shaders\flat.vert" />
     <None Include="shaders\hidden_line.frag" />
     <None Include="shaders\hidden_line.vert" />
+    <None Include="shaders\lightPoV.frag" />
+    <None Include="shaders\lightPoV.vert" />
     <None Include="shaders\phong.frag" />
     <None Include="shaders\phong.vert" />
     <None Include="shaders\text.frag" />

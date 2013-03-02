@@ -17,7 +17,7 @@ void main() {
 	vec4 pos = modelview_matrix * vec4(position, 1.0);
 	v = normalize(-pos.xyz);
 
-	l = normalize(vec3(200.0f, 200.0f, 200.0f) - pos.xyz);
+	l = normalize(vec3(1.0f, 1.0f, 1.0f) - pos.xyz);
 	
 	gl_Position = projection_matrix * pos;
 

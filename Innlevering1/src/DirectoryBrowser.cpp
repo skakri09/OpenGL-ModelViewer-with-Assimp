@@ -24,7 +24,7 @@ void DirectoryBrowser::RenderDirectoryBrowser(float mouseX, float mouseY, LeftMo
 		if(DirStack.size() > 0)
 		{
 			std::vector<DirectoryEntry> dir = DirStack.top();
-			for(int i=0; i < dir.size(); i++)
+			for(unsigned int i=0; i < dir.size(); i++)
 			{
 				RenderEntry(&dir.at(i), mouseX, mouseY, state);
 			}
@@ -118,7 +118,6 @@ void DirectoryBrowser::Init( std::string dirPath, GameManager* gameManager,
 	
 }
 
-
 void DirectoryBrowser::PushNewDirectory( path newDir )
 {
 	std::vector<DirectoryEntry> v;
@@ -208,7 +207,7 @@ void DirectoryBrowser::HandleCLickedEntry( DirectoryEntry& entry )
 	{
 		PushNewDirectory(entry.p);
 	}
-	else if(entry.extension == "pop");
+	else if(entry.extension == "pop")
 	{
 		PopDirectory();
 	}

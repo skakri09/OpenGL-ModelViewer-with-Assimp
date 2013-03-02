@@ -132,7 +132,6 @@ Text TextRenderer::RenderText( std::string text, std::string font, float xPos, f
 	program->use();
 	glUniform1i(program->getUniform("tex"), 0);
 
-
 	std::vector<float> coords;
 	coords.resize(text.length() * 6 * 4);
 

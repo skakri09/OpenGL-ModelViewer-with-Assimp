@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 
 	game.reset(new GameManager());
 	if(argv[1] != NULL)
-		game->SetModelToLoad(argv[1]);
+		game->SetModelToLoad("models/room.obj");
 	game->init();
 	game->play();
 	game.reset();
