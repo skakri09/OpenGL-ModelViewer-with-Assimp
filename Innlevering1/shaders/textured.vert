@@ -5,6 +5,7 @@ uniform mat4 model_matrix;
 uniform mat3 normal_matrix;
 
 uniform mat4 shadow_matrix;
+uniform vec3 light_position;
 
 in vec3 position;
 in vec3 normal;
@@ -21,12 +22,12 @@ void main() {
 
 	v = normalize(-cam_pos .xyz);
 
-	l = normalize(vec3(1.0f, 1.0f, 1.0f) - cam_pos .xyz);
-	
+	//l = normalize(vec3(1.0f, 1.0f, 1.0f) - cam_pos .xyz);
+	l = normalize(light_position - cam_pos.xyz);
 	gl_Position = projection_matrix * cam_pos;
 
 	normal_smooth = normal_matrix*normal;
 	textCoord0 = textureCoord0;
 
-	shadow_coord = shadow_matrix * model_matrix * vec4(position, 1.0);
+	shadow_coord = shadow_matrix * vec4(position, 1.0);
 }

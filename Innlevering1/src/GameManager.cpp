@@ -97,7 +97,7 @@ void GameManager::createMatrices()
 	fbo_modelMatrix = glm::translate(fbo_modelMatrix, glm::vec3(0.7f, 0.7f, 0));
 	fbo_modelMatrix = glm::scale(fbo_modelMatrix, glm::vec3(0.3));
 
-	lightPosition = glm::vec3(0, 0, 5);
+	lightPosition = glm::vec3(0, 1, 5);
 	lightProjection = glm::perspective(FoV, window_width/(float)window_height, 1.0f, 10.0f);
 	lightView = glm::lookAt(lightPosition, glm::vec3(0), glm::vec3(0, 1, 0));
 }
@@ -181,14 +181,24 @@ void GameManager::init()
 }
 
 void GameManager::renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<Program>& program, 
-		const glm::mat4& view_matrix, const glm::mat4& model_matrix, RenderMode mode) 
+		const glm::mat4& view_matrix, const glm::mat4& model_matrix, RenderMode mode,
+		const glm::mat4& light_view_matrix) 
 {
 	//Create modelview matrix
 	glm::mat4 meshpart_model_matrix = model_matrix*mesh.transform;
 	glm::mat4 modelview_matrix = view_matrix*meshpart_model_matrix;
-	glUniformMatrix4fv(program->getUniform("modelview_matrix"), 1, 0, glm::value_ptr(modelview_matrix));
 
-	glUniformMatrix4fv(program->getUniform("model_matrix"), 1, 0, glm::value_ptr(meshpart_model_matrix));
+	glm::mat4 light_modelview_matrix = light_view_matrix*meshpart_model_matrix;
+
+	glUniformMatrix4fv(program->getUniform("modelview_matrix"), 1, 0, glm::value_ptr(modelview_matrix));
+	glUniform3fv(program->getUniform("light_position"), 1, glm::value_ptr(lightPosition));
+
+	glm::mat4 shadowMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
+	shadowMatrix = glm::scale(shadowMatrix, glm::vec3(0.5f)) * lightProjection * light_modelview_matrix;
+
+	glUniformMatrix4fv(current_program->getUniform("shadow_matrix"), 1, 0, glm::value_ptr(shadowMatrix));
+
+	///glUniformMatrix4fv(program->getUniform("model_matrix"), 1, 0, glm::value_ptr(light_modelview_matrix));
 
 	if(mode == RENDERMODE_TEXTURED)
 	{
@@ -228,7 +238,7 @@ void GameManager::renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<Prog
 	
 
 	for (unsigned int i=0; i<mesh.children.size(); ++i)
-		renderMeshRecursive(mesh.children.at(i), program, view_matrix, meshpart_model_matrix, mode);
+		renderMeshRecursive(mesh.children.at(i), program, view_matrix, meshpart_model_matrix, mode, light_view_matrix);
 }
 
 void GameManager::renderMeshRecursiveLight( MeshPart& mesh, const std::shared_ptr<GLUtils::Program>& program, 
@@ -300,10 +310,7 @@ void GameManager::RenderLightPoV()
 void GameManager::RenderCamPoV()
 {
 	glm::mat4 view_matrix_new = view_matrix*trackball_view_matrix;
-
-	glm::mat4 shadowMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
-	shadowMatrix = glm::scale(shadowMatrix, glm::vec3(0.5f)) * lightProjection * lightView;
-
+	glm::mat4 _light_view_matrix_new = lightView*trackball_view_matrix;
 	//Render geometry
 	glBindVertexArray(vao);
 	current_program->use();
@@ -312,7 +319,6 @@ void GameManager::RenderCamPoV()
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, fbo_texture);
 
-	glUniformMatrix4fv(current_program->getUniform("shadow_matrix"), 1, 0, glm::value_ptr(shadowMatrix));
 	glUniformMatrix4fv(current_program->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
 	CHECK_GL_ERROR();
 	glUniform1i(prog_textured->getUniform("diffuseMap_texture"), 0); //< 0 means GL_TEXTURE0
@@ -326,9 +332,9 @@ void GameManager::RenderCamPoV()
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	if(renderMode == RENDERMODE_HIDDEN_LINE)
-		RenderHiddenLine(view_matrix_new);
+		RenderHiddenLine(view_matrix_new, lightView);
 	else
-		renderMeshRecursive(model->getMesh(), current_program, view_matrix_new, model_matrix, renderMode);
+		renderMeshRecursive(model->getMesh(), current_program, view_matrix_new, model_matrix, renderMode, _light_view_matrix_new);
 
 	current_program->disuse();
 	glBindVertexArray(0);
@@ -545,7 +551,7 @@ void GameManager::UpdateAttripPtrs()
 	}
 }
 
-void GameManager::RenderHiddenLine(glm::mat4 view_matrix_new)
+void GameManager::RenderHiddenLine(glm::mat4 view_matrix_new, const glm::mat4& light_model_view_matrix)
 {
 	//IF its hidden_line rendermode, we do some polygon offset stuff here and in the next if check below
 	if(renderMode == RENDERMODE_HIDDEN_LINE)
@@ -556,7 +562,7 @@ void GameManager::RenderHiddenLine(glm::mat4 view_matrix_new)
 		glUniform4fv(current_program->getUniform("rendering_color"), 1, glm::value_ptr(backgroundColor));
 	}
 
-	renderMeshRecursive(model->getMesh(), current_program, view_matrix_new, model_matrix, renderMode);
+	renderMeshRecursive(model->getMesh(), current_program, view_matrix_new, model_matrix, renderMode, light_model_view_matrix);
 
 	//Rendering the model a second time with some polygon offset magic if its hidden_line rendering
 	if(renderMode == RENDERMODE_HIDDEN_LINE)
@@ -567,7 +573,7 @@ void GameManager::RenderHiddenLine(glm::mat4 view_matrix_new)
 		glEnable (GL_POLYGON_OFFSET_LINE);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glPolygonOffset(0.0f, 0.0f);
-		renderMeshRecursive(model->getMesh(), current_program, view_matrix_new, model_matrix, renderMode);
+		renderMeshRecursive(model->getMesh(), current_program, view_matrix_new, model_matrix, renderMode, light_model_view_matrix);
 		glDisable(GL_POLYGON_OFFSET_LINE);
 	}
 }
@@ -632,6 +638,8 @@ void GameManager::createFBO()
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+	//glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, window_width, window_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, (void*)0);

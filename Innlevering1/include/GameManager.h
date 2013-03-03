@@ -128,14 +128,15 @@ private:
 
 	RenderMode renderMode, oldRenderMode;
 
-	static void renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<GLUtils::Program>& program, 
-									const glm::mat4& view_matrix, const glm::mat4& model_matrix, RenderMode mode);
+	void renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<GLUtils::Program>& program, 
+									const glm::mat4& view_matrix, const glm::mat4& model_matrix, RenderMode mode,
+									const glm::mat4& light_view_matrix);
 
 	void DetermineRenderMode(SDL_Keycode keyCode);
 
 	void UpdateAttripPtrs();
 
-	void RenderHiddenLine(glm::mat4 view_matrix_new);
+	void RenderHiddenLine(glm::mat4 view_matrix_new, const glm::mat4& light_model_view_matrix);
 
 	GLuint vao; //< Vertex array object
 	
