@@ -100,6 +100,7 @@ void GameManager::createMatrices()
 	lightPosition = glm::vec3(0, 1, 5);
 	lightProjection = glm::perspective(FoV, window_width/(float)window_height, 1.0f, 10.0f);
 	lightView = glm::lookAt(lightPosition, glm::vec3(0), glm::vec3(0, 1, 0));
+	totalTime = 0.0f;
 }
 
 void GameManager::createSimpleProgram() 
@@ -194,6 +195,10 @@ void GameManager::renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<Prog
 	glUniform3fv(program->getUniform("light_position"), 1, glm::value_ptr(lightPosition));
 
 	glm::mat4 shadowMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
+	/*shadowMatrix += glm::mat4(0.5f, 0, 0, 0.5f,
+							  0, 0.5f, 0, 0.5f,
+							  0, 0, 0.5f*0.99f, 0.5f+0.01f,
+							  0, 0, 0, 1);*/
 	shadowMatrix = glm::scale(shadowMatrix, glm::vec3(0.5f)) * lightProjection * light_modelview_matrix;
 
 	glUniformMatrix4fv(current_program->getUniform("shadow_matrix"), 1, 0, glm::value_ptr(shadowMatrix));
@@ -263,8 +268,6 @@ void GameManager::renderMeshRecursiveLight( MeshPart& mesh, const std::shared_pt
 void GameManager::render() 
 {
 	/*Rendering the lightPoV to our FBO*/
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	RenderLightPoV();
 
 	CHECK_GL_ERROR();
@@ -287,8 +290,36 @@ void GameManager::render()
 
 void GameManager::RenderLightPoV()
 {
+
 	glm::mat4 view_matrix_new = lightView*trackball_view_matrix;
 
+#pragma region fbo1
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glBindVertexArray(vao);
+	light_prog->use();
+
+	glEnable (GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(1.0f, 4.4f);
+
+	model->getInterleavedVBO()->bind();
+	model->getIndexesVBO()->bindIndexes();
+	light_prog->setAttributePointer("in_Position", 3, GL_FLOAT, GL_FALSE, model->getStride(), model->getVerticeOffset());
+
+	glUniformMatrix4fv(light_prog->getUniform("projection"), 1, 0, glm::value_ptr(lightProjection));
+
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	renderMeshRecursiveLight(model->getMesh(), light_prog, view_matrix_new, model_matrix);
+	glDisable(GL_POLYGON_OFFSET_FILL);
+	light_prog->disuse();
+	glBindVertexArray(0);
+#pragma endregion
+
+#pragma region fbo2
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo2);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glBindVertexArray(vao);
 	light_prog->use();
 
@@ -298,14 +329,16 @@ void GameManager::RenderLightPoV()
 
 	glUniformMatrix4fv(light_prog->getUniform("projection"), 1, 0, glm::value_ptr(lightProjection));
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	renderMeshRecursiveLight(model->getMesh(), light_prog, view_matrix_new, model_matrix);
 
 	light_prog->disuse();
 	glBindVertexArray(0);
-}
 
+#pragma endregion
+
+}
 
 void GameManager::RenderCamPoV()
 {
@@ -351,7 +384,7 @@ void GameManager::RenderDepthDump()
 
 	//Bind the textures before rendering
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, fbo_texture);
+	glBindTexture(GL_TEXTURE_2D, fbo_texture2);
 
 	glBindVertexArray(fbo_vao);
 
@@ -374,6 +407,7 @@ void GameManager::play()
 	//SDL main loop
 	while (!doExit) 
 	{
+
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) 
 		{// poll for pending events
@@ -432,7 +466,7 @@ void GameManager::play()
 		render();
 		SDL_GL_SwapWindow(main_window);
 
-
+		RotateLight();
 		deltaTime = static_cast<float>(my_timer.elapsedAndRestart());
 		fpsTimer += deltaTime;
 		if(fpsTimer >= 0.3f)//updating the fps counter once every .3sec
@@ -627,6 +661,7 @@ void GameManager::createFBOVAO()
 
 void GameManager::createFBO()
 {
+#pragma region fbo1
 	glGenTextures(1, &fbo_texture);
 	glBindTexture(GL_TEXTURE_2D, fbo_texture);
 
@@ -665,7 +700,58 @@ void GameManager::createFBO()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	CHECK_GL_FBO_COMPLETENESS();
+#pragma endregion
+
+#pragma region fbo2
+	glGenTextures(1, &fbo_texture2);
+	glBindTexture(GL_TEXTURE_2D, fbo_texture2);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, window_width, window_height, 0, GL_RGBA, GL_FLOAT, NULL);
+
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+	//glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, window_width, window_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, (void*)0);
+
+	glGenFramebuffers(1, &fbo2);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo2);
+	glDrawBuffer(GL_NONE);
+	//glReadBuffer(GL_NONE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, fbo_texture2, 0);
+	TextureFactory::Inst()->SaveTexture("fbo_texture2", fbo_texture2);
+	////depth render buffer
+	//glGenRenderbuffers(1, &fbo_depth);
+	//glBindRenderbuffer(GL_RENDERBUFFER, fbo_depth);
+	//glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, window_width, window_height);
+	//glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+	////create an fbo and attach texture and render buffer
+	//glGenFramebuffers(1, &fbo);
+	//glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbo_texture, 0);
+	//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fbo_depth);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	CHECK_GL_FBO_COMPLETENESS();
+
+#pragma endregion
 }
+
+void GameManager::RotateLight()
+{
+	totalTime += (float)my_timer.elapsed();
+	lightPosition = glm::vec3(sin(totalTime)*2, 1, 5+cos(totalTime));
+	lightView = glm::lookAt(lightPosition, glm::vec3(0), glm::vec3(0, 1, 0));
+}
+
 
 
 

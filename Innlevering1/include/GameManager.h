@@ -175,6 +175,9 @@ private:
 	GLuint fbo_texture; //< framebuffer object color attachment (texture)
 	GLuint fbo_depth; //< framebuffer object depth attachment (renerbuffer)
 	
+	GLuint fbo2; //< Frame buffer object id
+	GLuint fbo_texture2; //< framebuffer object color attachment (texture)
+
 	glm::mat4 fbo_modelMatrix;
 	glm::mat4 fbo_projectionMatrix;
 	glm::mat4 fbo_viewMatrix;
@@ -224,6 +227,8 @@ private:
 	float mouseX, mouseY;
 
 	LeftMouseState* mouseState;
+	void RotateLight();
+	float totalTime;
 };
 
 #endif // _GAMEMANAGER_H_

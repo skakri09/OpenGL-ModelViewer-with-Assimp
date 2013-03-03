@@ -24,7 +24,7 @@ void main() {
 	vec4 diffuse = texture2D(diffuseMap_texture, textCoord0)*vec4(diff);
 	float spec = pow(max(0.0f, dot(n, h)), 500.0f);
 	
-	out_color = vec4((diffuse + spec) * shadeFactor);
+	out_color = vec4((diffuse + (spec*0.1)) * shadeFactor);
     
 	//out_color = diff*vec4(1.0f, 0.6f, 0.1f, 1.0f) + vec4(spec)+vec4(textCoord0, 0,0);
 }
