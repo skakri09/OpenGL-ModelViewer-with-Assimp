@@ -173,10 +173,11 @@ private:
 	GLuint fbo_vertex_bo; //< Vetex buffer object for fullscreen quad
 	GLuint fbo_texture; //< framebuffer object color attachment (texture)
 	GLuint fbo_depth; //< framebuffer object depth attachment (renerbuffer)
+	
 	glm::mat4 fbo_modelMatrix;
 	glm::mat4 fbo_projectionMatrix;
 	glm::mat4 fbo_viewMatrix;
-	
+
 	void RenderLightPoV();
 	void RenderCamPoV();
 	void RenderDepthDump();

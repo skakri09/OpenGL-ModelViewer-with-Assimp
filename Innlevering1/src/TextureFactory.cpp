@@ -80,3 +80,8 @@ GLint TextureFactory::LoadTexture( std::string texturePath )
 		return texture;
 	}
 }
+
+void TextureFactory::SaveTexture( std::string key, GLint val )
+{
+
+}

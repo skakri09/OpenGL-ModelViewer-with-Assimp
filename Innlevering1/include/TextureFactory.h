@@ -51,6 +51,11 @@ public:
 	*/
 	GLint LoadTexture(std::string texturePath);
 
+	/*
+	* Simply stores a texture in the map so that it may be retrieved at a later point
+	*/
+	void SaveTexture(std::string key, GLint val);
+
 protected:
 
 private:

@@ -97,7 +97,7 @@ void GameManager::createMatrices()
 	fbo_modelMatrix = glm::translate(fbo_modelMatrix, glm::vec3(0.7f, 0.7f, 0));
 	fbo_modelMatrix = glm::scale(fbo_modelMatrix, glm::vec3(0.3));
 
-	lightPosition = glm::vec3(2, 2, 2);
+	lightPosition = glm::vec3(0, 0, 5);
 	lightProjection = glm::perspective(FoV, window_width/(float)window_height, 1.0f, 10.0f);
 	lightView = glm::lookAt(lightPosition, glm::vec3(0), glm::vec3(0, 1, 0));
 }
@@ -109,7 +109,10 @@ void GameManager::createSimpleProgram()
 	prog_flat = createProgram("shaders/flat.vert", "shaders/flat.frag");
 	prog_wireframe = createProgram("shaders/wireframe.vert", "shaders/wireframe.frag");
 	prog_hiddenLine = createProgram("shaders/hidden_line.vert", "shaders/hidden_line.frag");
+	CHECK_GL_ERROR();
 	prog_textured = createProgram("shaders/textured.vert", "shaders/textured.frag");
+
+	CHECK_GL_ERROR();
 	prog_text = createProgram("shaders/text.vert", "shaders/text.frag", false);
 	renderMode = RENDERMODE_TEXTURED;
 	oldRenderMode = NONE;
@@ -153,18 +156,23 @@ void GameManager::init()
 		err << "Could not initialize SDL: " << SDL_GetError();
 		THROW_EXCEPTION(err.str());
 	}
+
 	atexit( SDL_Quit);
-	
+
 	createOpenGLContext();
 	setOpenGLStates();
 	createMatrices();
+	CHECK_GL_ERROR();
 	createSimpleProgram();
+	CHECK_GL_ERROR();
 	createVAO();
-	
+	CHECK_GL_ERROR();
 	createFBOProgram();
+	CHECK_GL_ERROR();
 	createFBOVAO();
+	CHECK_GL_ERROR();
 	createFBO();
-	
+	CHECK_GL_ERROR();
 	dirBrowser.reset(new DirectoryBrowser());
 	dirBrowser->Init("models", this, prog_text);
 	mouseState = new LeftMouseState();
@@ -179,6 +187,8 @@ void GameManager::renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<Prog
 	glm::mat4 meshpart_model_matrix = model_matrix*mesh.transform;
 	glm::mat4 modelview_matrix = view_matrix*meshpart_model_matrix;
 	glUniformMatrix4fv(program->getUniform("modelview_matrix"), 1, 0, glm::value_ptr(modelview_matrix));
+
+	glUniformMatrix4fv(program->getUniform("model_matrix"), 1, 0, glm::value_ptr(meshpart_model_matrix));
 
 	if(mode == RENDERMODE_TEXTURED)
 	{
@@ -198,6 +208,7 @@ void GameManager::renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<Prog
 		glDrawElements(GL_TRIANGLES, mesh.count, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * mesh.first));
 		if(boundTexture)
 		{
+			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 	}	
@@ -227,6 +238,7 @@ void GameManager::renderMeshRecursiveLight( MeshPart& mesh, const std::shared_pt
 	glm::mat4 meshpart_model_matrix = model_matrix*mesh.transform;
 
 	glm::mat4 modelview_matrix = view_matrix*meshpart_model_matrix;
+
 	glUniformMatrix4fv(program->getUniform("modelview_matrix"), 1, 0, glm::value_ptr(modelview_matrix));
 
 	glDrawElements(GL_TRIANGLES, mesh.count, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * mesh.first));
@@ -288,13 +300,25 @@ void GameManager::RenderLightPoV()
 void GameManager::RenderCamPoV()
 {
 	glm::mat4 view_matrix_new = view_matrix*trackball_view_matrix;
+
+	glm::mat4 shadowMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
+	shadowMatrix = glm::scale(shadowMatrix, glm::vec3(0.5f)) * lightProjection * lightView;
+
 	//Render geometry
 	glBindVertexArray(vao);
 	current_program->use();
 
 	UpdateAttripPtrs();
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, fbo_texture);
 
+	glUniformMatrix4fv(current_program->getUniform("shadow_matrix"), 1, 0, glm::value_ptr(shadowMatrix));
 	glUniformMatrix4fv(current_program->getUniform("projection_matrix"), 1, 0, glm::value_ptr(projection_matrix));
+	CHECK_GL_ERROR();
+	glUniform1i(prog_textured->getUniform("diffuseMap_texture"), 0); //< 0 means GL_TEXTURE0
+
+	CHECK_GL_ERROR();
+	glUniform1i(current_program->getUniform("shadowMap_texture"), 1); //< 1 means GL_TEXTURE1
 
 	if(renderMode == RENDERMODE_HIDDEN_LINE || renderMode == RENDERMODE_WIREFRAME)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -311,6 +335,8 @@ void GameManager::RenderCamPoV()
 
 	if(renderMode == RENDERMODE_HIDDEN_LINE || renderMode == RENDERMODE_WIREFRAME)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void GameManager::RenderDepthDump()
@@ -604,8 +630,8 @@ void GameManager::createFBO()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, window_width, window_height, 0, GL_RGBA, GL_FLOAT, NULL);
 
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, window_width, window_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, (void*)0);
@@ -615,7 +641,7 @@ void GameManager::createFBO()
 	glDrawBuffer(GL_NONE);
 	//glReadBuffer(GL_NONE);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, fbo_texture, 0);
-
+	TextureFactory::Inst()->SaveTexture("fbo_texture", fbo_texture);
 	////depth render buffer
 	//glGenRenderbuffers(1, &fbo_depth);
 	//glBindRenderbuffer(GL_RENDERBUFFER, fbo_depth);
