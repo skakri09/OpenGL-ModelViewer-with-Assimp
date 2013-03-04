@@ -14,6 +14,8 @@
 
 #include "FileHandler.h"
 #include "DirectoryBrowser.h"
+#include "Video.h"
+
 /**
  * This class handles the game logic and display.
  * Uses SDL as the display manager, and glm for 
@@ -105,8 +107,8 @@ protected:
 	 */
 	void createVAO();
 
-	static const unsigned int window_width = 1280;
-	static const unsigned int window_height = 720;
+	static const unsigned int window_width = 800;
+	static const unsigned int window_height = 600;
 
 	void ZoomIn();
 
@@ -232,8 +234,11 @@ private:
 
 	bool SaveImagesToDisc;
 	unsigned int frameCounter;
-	static void SaveImageToDisc(unsigned int window_width, unsigned int window_height,
+	
+	void SaveImageToDisc(unsigned int window_width, unsigned int window_height,
 					unsigned int* frameCounter, std::string format = ".bmp");
+
+	Video videoRecorder;
 };
 
 #endif // _GAMEMANAGER_H_

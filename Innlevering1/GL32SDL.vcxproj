@@ -23,6 +23,7 @@
     <ClInclude Include="include\TextureFactory.h" />
     <ClInclude Include="include\Timer.h" />
     <ClInclude Include="include\VirtualTrackball.h" />
+    <ClInclude Include="src\Video.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DirectoryBrowser.cpp" />
@@ -32,6 +33,7 @@
     <ClCompile Include="src\Model.cpp" />
     <ClCompile Include="src\TextRenderer.cpp" />
     <ClCompile Include="src\TextureFactory.cpp" />
+    <ClCompile Include="src\Video.cpp" />
     <ClCompile Include="src\VirtualTrackball.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -86,6 +88,7 @@
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

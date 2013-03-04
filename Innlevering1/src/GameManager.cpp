@@ -266,7 +266,6 @@ void GameManager::renderMeshRecursiveLight( MeshPart& mesh, const std::shared_pt
 		renderMeshRecursiveLight(mesh.children.at(i), program, view_matrix, meshpart_model_matrix);
 }
 
-
 void GameManager::render() 
 {
 	/*Rendering the lightPoV to our FBO*/
@@ -457,7 +456,13 @@ void GameManager::play()
 				if(event.key.keysym.sym == SDLK_PAGEDOWN)
 					ZoomOut();
 				if(event.key.keysym.sym == SDLK_p)
-					SaveImagesToDisc = !SaveImagesToDisc;
+				{
+					if(!SaveImagesToDisc)
+					{
+						SaveImagesToDisc = true;
+						videoRecorder.PrepVideoRecording(window_width, window_height, 3, 30, 5);
+					}
+				}
 
 				DetermineRenderMode(event.key.keysym.sym);
 				break;
@@ -763,7 +768,9 @@ void GameManager::RotateLight()
 void GameManager::SaveImageToDisc( unsigned int window_width, unsigned int window_height, 
 									unsigned int* frameCounter, std::string format /*= ".bmp"*/ )
 {
-	std::vector<unsigned char> pixelData;
+
+	SaveImagesToDisc = videoRecorder.StoreFrame(deltaTime);
+	/*std::vector<unsigned char> pixelData;
 	pixelData.resize(window_width*window_height*3);
 	glReadBuffer(GL_FRONT);
 	glReadPixels(0, 0, window_width, window_height, GL_RGB, GL_UNSIGNED_BYTE, &pixelData[0]);
@@ -775,9 +782,9 @@ void GameManager::SaveImageToDisc( unsigned int window_width, unsigned int windo
 
 	std::stringstream str;
 	std::string path = "video/frame";
-	str<<path<<++*frameCounter<<format;
+	str<<path<<++*frameCounter<<format;*/
 
-	ilSaveImage(str.str().c_str());
+	//ilSaveImage(str.str().c_str());
 }
 
 
