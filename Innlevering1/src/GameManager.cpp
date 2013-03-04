@@ -179,6 +179,8 @@ void GameManager::init()
 	mouseState = new LeftMouseState();
 	*mouseState = UP;
 	mouseX = mouseY = 0.0f;
+	SaveImagesToDisc = false;
+	frameCounter = 0;
 }
 
 void GameManager::renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<Program>& program, 
@@ -285,6 +287,9 @@ void GameManager::render()
 	/*Rendering the directoryBrowser*/
 	dirBrowser->RenderDirectoryBrowser(mouseX, mouseY, mouseState);
 	
+	if(SaveImagesToDisc)
+		SaveImageToDisc(window_width, window_height, &frameCounter);
+
 	CHECK_GL_ERROR();
 }
 
@@ -451,6 +456,9 @@ void GameManager::play()
 					ZoomIn();
 				if(event.key.keysym.sym == SDLK_PAGEDOWN)
 					ZoomOut();
+				if(event.key.keysym.sym == SDLK_p)
+					SaveImagesToDisc = !SaveImagesToDisc;
+
 				DetermineRenderMode(event.key.keysym.sym);
 				break;
 			case SDL_KEYUP:
@@ -751,6 +759,27 @@ void GameManager::RotateLight()
 	lightPosition = glm::vec3(sin(totalTime)*2, 1, 5+cos(totalTime));
 	lightView = glm::lookAt(lightPosition, glm::vec3(0), glm::vec3(0, 1, 0));
 }
+
+void GameManager::SaveImageToDisc( unsigned int window_width, unsigned int window_height, 
+									unsigned int* frameCounter, std::string format /*= ".bmp"*/ )
+{
+	std::vector<unsigned char> pixelData;
+	pixelData.resize(window_width*window_height*3);
+	glReadBuffer(GL_FRONT);
+	glReadPixels(0, 0, window_width, window_height, GL_RGB, GL_UNSIGNED_BYTE, &pixelData[0]);
+	ILuint ImageName;
+
+	ilGenImages(1, &ImageName); 
+	ilBindImage(ImageName);
+	ilTexImage(window_width, window_height, 1, 3, IL_RGB, IL_UNSIGNED_BYTE, &pixelData[0]);
+
+	std::stringstream str;
+	std::string path = "video/frame";
+	str<<path<<++*frameCounter<<format;
+
+	ilSaveImage(str.str().c_str());
+}
+
 
 
 

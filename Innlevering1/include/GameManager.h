@@ -229,6 +229,11 @@ private:
 	LeftMouseState* mouseState;
 	void RotateLight();
 	float totalTime;
+
+	bool SaveImagesToDisc;
+	unsigned int frameCounter;
+	static void SaveImageToDisc(unsigned int window_width, unsigned int window_height,
+					unsigned int* frameCounter, std::string format = ".bmp");
 };
 
 #endif // _GAMEMANAGER_H_
