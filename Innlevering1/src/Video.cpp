@@ -27,6 +27,10 @@ void Video::PrepVideoRecording( unsigned int window_width, unsigned int window_h
 	this->components = image_components;
 	this->fps = fps;
 	
+	diskStoredFramesCounter = 0;
+
+	currentVideoSubFolder = CreateFramesDirectory();
+
 	recordTimer = 0.0f;
 }
 
@@ -65,14 +69,53 @@ void Video::FinishRecordingAndSave()
 void Video::DumpFramesToDisk()
 {
 	std::deque<Frame*> oldFrames = Frames;
+	unsigned int framesCount = oldFrames.size();
 	Frames.clear();
 
-	WriteThread1 = boost::thread(WriteFramesToDisk, oldFrames, window_width, window_height);
+	boost::thread WriteThread1(WriteFramesToDisk, oldFrames, window_width, window_height,
+								diskStoredFramesCounter, currentVideoSubFolder);
+	diskStoredFramesCounter += framesCount;
+}
+
+std::string Video::CreateFramesDirectory()
+{
+	std::string framesDir;
+
+	boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
+	namespace pt = boost::posix_time;
+	pt::ptime time =  pt::microsec_clock::local_time();
+	std::stringstream ss;
+	ss << static_cast<int>(now.date().month()) << "/" << now.date().day()
+		<< "/" << now.date().year() << " " << time.time_of_day();
+	std::cout << ss.str() << std::endl;
+
+	
+
+	path p = "video";
+	if(exists(p))
+	{
+		directory_iterator end;
+		//Looping trough the contents of the current directory
+		for(directory_iterator iter(p); iter != end; ++iter)
+		{
+			if(is_directory(*iter))	
+			{
+				path p = *iter;
+				std::string pathName = p.string();
+				
+				
+				std::cout << p.string() << "\\" << "\t\t" << "folder" << std::endl;
+			}
+		}
+	}
+	return framesDir;
 }
 
 void WriteFramesToDisk(std::deque<Frame*> Frames,
 						unsigned int window_width, 
-						unsigned int window_height)
+						unsigned int window_height,
+						unsigned int startSaveindex,
+						std::string videoSubFolder)
 {
 	for(unsigned int i = 0; i < Frames.size(); i++)
 	{
@@ -86,7 +129,7 @@ void WriteFramesToDisk(std::deque<Frame*> Frames,
 
 		std::stringstream str;
 		std::string path = "video/frame";
-		str<<path<<i<<".bmp";
+		str<<path<<startSaveindex+i<<".bmp";
 
 		ilSaveImage(str.str().c_str());
 		delete f;

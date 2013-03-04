@@ -19,6 +19,11 @@
 #include <IL/ilu.h>
 #include <boost/thread/thread.hpp>
 
+#include <boost/filesystem.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+
+using namespace boost::filesystem;
+
 struct Frame{
 	Frame(unsigned int window_width, 
 		unsigned int window_height,
@@ -55,7 +60,9 @@ public:
 protected:
 
 private:
-	//std::vector<Frame*> Frames;
+	std::string CreateFramesDirectory();
+
+
 	std::deque<Frame*> Frames;
 
 	unsigned int window_width, window_height;
@@ -63,6 +70,9 @@ private:
 	unsigned int frameCounter;
 	unsigned int components;
 	float recordTimer;
+
+	unsigned int diskStoredFramesCounter;
+	std::string currentVideoSubFolder;
 
 	bool recording;
 
@@ -75,7 +85,9 @@ private:
 
 void WriteFramesToDisk(std::deque<Frame*> Frames, 
 					   unsigned int window_width, 
-					   unsigned int window_height);
+					   unsigned int window_height,
+					   unsigned int startSaveindex,
+					   std::string videoSubFolder);
 
 
 #endif // Video_h__
