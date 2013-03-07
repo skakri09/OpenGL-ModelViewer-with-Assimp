@@ -17,6 +17,13 @@
 #include <vector>
 #include <deque>
 
+struct VideoWriterMutexed
+{
+	std::shared_ptr<cv::VideoWriter> video_writer;
+
+	boost::mutex vwm_mutex;
+};
+typedef std::shared_ptr<VideoWriterMutexed> video_writer_ptr;
 
 struct VideoFrame
 {
@@ -40,27 +47,31 @@ typedef std::shared_ptr<std::deque<video_frame_ptr>> video_frame_deque_ptr;
 struct VideoFrameBuffer
 {
 	video_frame_deque_ptr video_frames_buffer;
-	
+	cv::Size window_size;
+	int _type;
+	unsigned int alloc_size;
+
 	boost::mutex vfb_mutex;
 };
 
-void WriteFramesToDisk(std::deque<VideoFrame*> Frames, 
-						unsigned int window_width, 
-						unsigned int window_height,
-						unsigned int startSaveindex,
-						std::string videoSubFolder);
+typedef std::shared_ptr<VideoFrameBuffer> video_frame_buffer_ptr;
+
+
+/**
+* Writes a the VideoFrameBuffer to disk with the provided VideoWriter
+* @Param video_Frame_buffer: The buffer to write from
+* @Param video_writer: the VideoWriter object to write with
+*/
+void WriteFramesToDisk(video_frame_buffer_ptr video_frame_buffer,
+					   cv::VideoWriter* video_writer, bool flip=true);
+
 
 /**
 * Allocates a given amount of Frames in the target buffer
-* @Param target_buffer: deque to place the Frame*s in
-* @Param window_size: size of each frame (should be same size as FBO)
-* @Param type: Represents the pixel-packing type. example: CV_8UC3 (3 unsigned chars/bytes)
-* @Param alloc_size: The amount of Frames to initialize
+* @Param video_frame_buffer: shared ptr to a VideoFrameBuffer object
+* that should be allocated
 */
-void AllocateFramesBuffer(std::deque<VideoFrame*>* target_buffer, 
-						cv::Size window_size, 
-						int _type, 
-						unsigned int alloc_size);
+void AllocateFramesBuffer(video_writer_ptr video_frame_buffer);
 
 
 #endif // VideoThreadedUtil_h__
