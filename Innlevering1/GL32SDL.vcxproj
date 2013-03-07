@@ -25,6 +25,7 @@
     <ClInclude Include="include\ThreadPool.h" />
     <ClInclude Include="include\ThreadPool_old.h" />
     <ClInclude Include="include\Timer.h" />
+    <ClInclude Include="include\VideoThreadedUtil.h" />
     <ClInclude Include="include\VirtualTrackball.h" />
     <ClInclude Include="src\Video.h" />
   </ItemGroup>
@@ -40,6 +41,7 @@
     <ClCompile Include="src\ThreadPool.cpp" />
     <ClCompile Include="src\ThreadPool_old.cpp" />
     <ClCompile Include="src\Video.cpp" />
+    <ClCompile Include="src\VideoThreadedUtil.cpp" />
     <ClCompile Include="src\VirtualTrackball.cpp" />
   </ItemGroup>
   <ItemGroup>

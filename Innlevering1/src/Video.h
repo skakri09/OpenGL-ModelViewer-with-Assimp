@@ -31,8 +31,9 @@
 
 using namespace boost::filesystem;
 using namespace cv;
-struct Frame{
-	Frame(unsigned int window_width, 
+
+struct VideoFrame{
+	VideoFrame(unsigned int window_width, 
 		unsigned int window_height,
 		unsigned int image_components)
 	{
@@ -69,7 +70,7 @@ private:
 	std::string CreateFramesDirectory();
 
 	std::vector<Mat*> frames;
-	std::deque<Frame*> Frames;
+	std::deque<VideoFrame*> Frames;
 
 	unsigned int window_width, window_height;
 	unsigned int fps;
@@ -88,15 +89,7 @@ private:
 };
 
 
-void WriteFramesToDisk(std::deque<Frame*> Frames, 
-					   unsigned int window_width, 
-					   unsigned int window_height,
-					   unsigned int startSaveindex,
-					   std::string videoSubFolder);
 
-std::vector<Frame*>* AllocateFrameBuffer(
-	unsigned int window_width, unsigned int window_height, 
-	unsigned int image_components, unsigned int allocationSize);
 
 
 #endif // Video_h__

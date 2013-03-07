@@ -72,6 +72,9 @@
     <ClInclude Include="include\PooledThread.h">
       <Filter>Threading</Filter>
     </ClInclude>
+    <ClInclude Include="include\VideoThreadedUtil.h">
+      <Filter>Threading</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GameManager.cpp">
@@ -108,6 +111,9 @@
       <Filter>Threading</Filter>
     </ClCompile>
     <ClCompile Include="src\PooledThread.cpp">
+      <Filter>Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="src\VideoThreadedUtil.cpp">
       <Filter>Threading</Filter>
     </ClCompile>
   </ItemGroup>

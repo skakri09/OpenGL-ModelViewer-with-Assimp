@@ -125,12 +125,12 @@ void Video::FinishRecordingAndSave()
 
 void Video::DumpFramesToDisk()
 {
-	std::deque<Frame*> oldFrames = Frames;
+	std::deque<VideoFrame*> oldFrames = Frames;
 	unsigned int framesCount = oldFrames.size();
 	Frames.clear();
 
-	boost::thread WriteThread1(WriteFramesToDisk, oldFrames, window_width, window_height,
-								diskStoredFramesCounter, currentVideoSubFolder);
+	//boost::thread WriteThread1(WriteFramesToDisk, oldFrames, window_width, window_height,
+	//							diskStoredFramesCounter, currentVideoSubFolder);
 	diskStoredFramesCounter += framesCount;
 }
 
@@ -160,85 +160,4 @@ std::string Video::CreateFramesDirectory()
 	}
 	else 
 		throw std::exception("Something is rlllly wrong");
-}
-
-void WriteFramesToDisk(std::deque<Frame*> Frames,
-						unsigned int window_width, 
-						unsigned int window_height,
-						unsigned int startSaveindex,
-						std::string videoSubFolder)
-{
-	//std::string path = "video/"+videoSubFolder+"/"+"videotest.avi";
-	std::string path = "testVid.avi";
-	CvSize size;
-	size.height = window_height;
-	size.width = window_width;
-
-	cv::VideoWriter vw(path, -1, 30, Size(window_width, window_height), true);
-
-	//CvVideoWriter* vw = cvCreateVideoWriter(path.c_str(), 0, 30, size);
-	// CV_FOURCC('j','p','e','g')
-	//CvVideoWriter* vwcv = cvCreateVideoWriter(path.c_str(), -1, 30, size, 1);
-	
-	/*if(!vw->isOpened())
-		int breakhere = 1;*/
-	
-	/*for(unsigned int i = 0; i < Frames.size(); i++)*/
-	for(unsigned int i = 0; i < 2; i++)
-	{
-		char* imgName = "imagenamelol";
-		
-		//CV_8UC3
-
-		
-
-
-		
-
-		//namedWindow( "Gray image", CV_WINDOW_AUTOSIZE );
-		
-		
-	//	IplImage* img = cvCreateImageHeader(size, IPL_DEPTH_8U, 1);
-		//img->imageData = (char*)Frames.at(i)->data[0];
-		//img->imageDataOrigin = img->imageData;
-		
-		//cvWriteFrame(vw,img);
-
-		//cvReleaseVideoWriter(&vw);
-		//vw << m;
-		//vw->write(m);
-	}
-	cvWaitKey(0);
-	//vw->release();
-	
-
-
-	/*for(unsigned int i = 0; i < Frames.size(); i++)
-	{
-	Frame* f = Frames[i];
-
-	ILuint ImageName;
-
-	ilGenImages(1, &ImageName); 
-	ilBindImage(ImageName);
-	ilTexImage(window_width, window_height, 1, 3, IL_RGB, IL_UNSIGNED_BYTE, &f->data[0]);
-
-	std::stringstream str;
-	std::string path = "video/"+videoSubFolder+"/"+"frame";
-	str<<path<<startSaveindex+i<<".bmp";
-
-	ilSaveImage(str.str().c_str());
-	delete f;
-	}*/
-}
-
-std::vector<Frame*>* AllocateFrameBuffer( unsigned int window_width, unsigned int window_height, 
-										  unsigned int image_components, unsigned int allocationSize )
-{
-	std::vector<Frame*>* frameBuffer = new std::vector<Frame*>();
-	frameBuffer->resize(allocationSize);
-	for(unsigned int i=0; i < frameBuffer->size(); i++)
-		(*frameBuffer)[i] = new Frame(window_width, window_height, image_components);
-
-	return frameBuffer;
 }
