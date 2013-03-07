@@ -19,6 +19,9 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{271770ee-387d-47bd-981a-ff0fbe839fdf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Threading">
+      <UniqueIdentifier>{8f0e804e-6985-4f07-8319-3b14737f0da9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\GameManager.h">
@@ -60,6 +63,15 @@
     <ClInclude Include="src\Video.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\ThreadPool_old.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ThreadPool.h">
+      <Filter>Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="include\PooledThread.h">
+      <Filter>Threading</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GameManager.cpp">
@@ -88,6 +100,15 @@
     </ClCompile>
     <ClCompile Include="src\Video.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ThreadPool_old.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ThreadPool.cpp">
+      <Filter>Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PooledThread.cpp">
+      <Filter>Threading</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

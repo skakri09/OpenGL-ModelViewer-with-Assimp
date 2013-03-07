@@ -21,9 +21,16 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/algorithm/string/replace.hpp>
+
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <iomanip>
+#include "ThreadPool.h"
 
 using namespace boost::filesystem;
-
+using namespace cv;
 struct Frame{
 	Frame(unsigned int window_width, 
 		unsigned int window_height,
@@ -45,8 +52,7 @@ public:
 	* Prepare the class for recording. fps and secondsToRecord is limited to 30
 	*/
 	void PrepVideoRecording(unsigned int window_width, unsigned int window_height,
-					  unsigned int image_components, unsigned int fps, 
-					  unsigned int secondsToRecord);
+							unsigned int image_components, unsigned int fps);
 
 
 
@@ -62,7 +68,7 @@ protected:
 private:
 	std::string CreateFramesDirectory();
 
-
+	std::vector<Mat*> frames;
 	std::deque<Frame*> Frames;
 
 	unsigned int window_width, window_height;
@@ -78,8 +84,7 @@ private:
 
 	void DumpFramesToDisk();
 
-	boost::thread WriteThread1;
-	boost::thread WriteThread2;
+	cv::VideoWriter* vw;
 };
 
 
@@ -88,6 +93,10 @@ void WriteFramesToDisk(std::deque<Frame*> Frames,
 					   unsigned int window_height,
 					   unsigned int startSaveindex,
 					   std::string videoSubFolder);
+
+std::vector<Frame*>* AllocateFrameBuffer(
+	unsigned int window_width, unsigned int window_height, 
+	unsigned int image_components, unsigned int allocationSize);
 
 
 #endif // Video_h__

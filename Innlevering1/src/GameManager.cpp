@@ -460,7 +460,7 @@ void GameManager::play()
 					if(!SaveImagesToDisc)
 					{
 						SaveImagesToDisc = true;
-						videoRecorder.PrepVideoRecording(window_width, window_height, 3, 30, 5);
+						videoRecorder.PrepVideoRecording(window_width, window_height, 3, 30);
 					}
 				}
 
