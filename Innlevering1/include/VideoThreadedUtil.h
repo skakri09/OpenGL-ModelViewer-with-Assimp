@@ -41,28 +41,49 @@ struct VideoFrame
 	cv::Mat* image;
 };
 
-typedef std::shared_ptr<VideoFrame> video_frame_ptr;
-typedef std::shared_ptr<std::deque<video_frame_ptr>> video_frame_deque_ptr;
+/*
+* std::shared_ptr<VideoFrame>
+*/
+typedef std::shared_ptr<VideoFrame> vf_ptr;
+
+/*
+* std::shared_ptr<std::deque<std::shared_ptr<VideoFrame>>> 
+*/
+typedef std::shared_ptr<std::deque<vf_ptr>> vf_deque_ptr;
 
 struct VideoFrameBuffer
 {
-	video_frame_deque_ptr video_frames_buffer;
+	/*
+	* Primary buffer, each entry in the buffer can store a frame
+	*/
+	vf_deque_ptr video_frames_buffer;
+	
+	/*
+	* Window size, is used to set the size of each frame
+	*/
 	cv::Size window_size;
-	int _type;
-	unsigned int alloc_size;
 
-	boost::mutex vfb_mutex;
+	int _type; //< The type of each color component (CV_8UC3 equals unsigned char)
+
+
+	unsigned int alloc_size; //< Amount of frames to allocate and intitialize
+
+	bool ready; //< Is the VideoFrameBuffer ready to be written to?
+
+	boost::mutex vfb_mutex; //< Mutex object to lock access to the video_frames_buffer
 };
 
-typedef std::shared_ptr<VideoFrameBuffer> video_frame_buffer_ptr;
-
+/*
+* std::shared_ptr<VideoFrameBuffer>
+*/
+typedef std::shared_ptr<VideoFrameBuffer> vfb_ptr;
 
 /**
 * Writes a the VideoFrameBuffer to disk with the provided VideoWriter
 * @Param video_Frame_buffer: The buffer to write from
 * @Param video_writer: the VideoWriter object to write with
 */
-void WriteFramesToDisk(video_frame_buffer_ptr video_frame_buffer,
+void WriteFramesToDisk(vfb_ptr video_frame_buffer,
 					   cv::VideoWriter* video_writer, bool flip=true);
 
 

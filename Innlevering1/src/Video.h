@@ -27,21 +27,23 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <iomanip>
+
 #include "ThreadPool.h"
+#include "VideoThreadedUtil.h"
 
 using namespace boost::filesystem;
 using namespace cv;
 
-struct VideoFrame{
-	VideoFrame(unsigned int window_width, 
-		unsigned int window_height,
-		unsigned int image_components)
-	{
-		data.resize(window_width*window_height*image_components);
-	}
-
-	std::vector<unsigned char> data;
-};
+//struct VideoFrame{
+//	VideoFrame(unsigned int window_width, 
+//		unsigned int window_height,
+//		unsigned int image_components)
+//	{
+//		data.resize(window_width*window_height*image_components);
+//	}
+//
+//	std::vector<unsigned char> data;
+//};
 
 class Video
 {
@@ -50,12 +52,18 @@ public:
     ~Video();
 
 	/*
-	* Prepare the class for recording. fps and secondsToRecord is limited to 30
+	* Prepare the class for recording.
+	* @Param window_width/window_height: Dimensions of the screen
+	* @Param image_components: Currently only 3 supported (RGB)
+	* @Param target_fps: target frames per seconds for the recording
 	*/
 	void PrepVideoRecording(unsigned int window_width, unsigned int window_height,
-							unsigned int image_components, unsigned int fps);
+							unsigned int image_components, unsigned int target_fps);
 
-
+	/**
+	* Takes care of getting new storage space for frames when needed.
+	*/
+	void Update();
 
 	/*
 	* Returns false when the last frame of prepared storing was stored
@@ -67,7 +75,26 @@ public:
 protected:
 
 private:
+
+	//When the size of video_frame_buffers hits this number,
+	//we allocate another buffer.
+	static const unsigned int min_allocated_buffers = 2;
+
+	//The amount of frames stored in each video_frame_buffer
+	static const unsigned int frame_buffer_size = 60;
+
+	// Storage type used for each color component in a frame buffer (unsigned char)
+	static const int _type = CV_8UC3;
+
 	std::string CreateFramesDirectory();
+
+	std::deque<vfb_ptr> video_frame_buffers;
+
+	/**
+	* Local vector of vfb_ptrs to all vfb objects currently being 
+	* allocated and initialized on some thread
+	*/
+	std::vector<vfb_ptr> buffers_being_allocated;
 
 	std::vector<Mat*> frames;
 	std::deque<VideoFrame*> Frames;
@@ -84,6 +111,8 @@ private:
 	bool recording;
 
 	void DumpFramesToDisk();
+
+	void OrderNewFrameBuffer();
 
 	cv::VideoWriter* vw;
 };

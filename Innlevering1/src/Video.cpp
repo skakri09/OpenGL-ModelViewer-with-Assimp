@@ -4,7 +4,7 @@
 Video::Video()
 {
 	recording = false;
-	namedWindow( "testwinName" );
+	//namedWindow( "testwinName" );
 }
 
 Video::~Video()
@@ -12,24 +12,23 @@ Video::~Video()
 }
 
 void Video::PrepVideoRecording( unsigned int window_width, unsigned int window_height, 
-								unsigned int image_components, unsigned int fps)
+								unsigned int image_components, unsigned int target_fps)
 {
 	//allocating data for the recording
 	//Frames.resize(fps*secondsToRecord, Frame(window_width, window_height, image_components));
-	Frames.resize(fps*4);
+	Frames.resize(target_fps*4);
 	for(unsigned int i = 0; i < Frames.size(); i++)
 	{
 		frames.push_back(new Mat(window_width, window_height, CV_8UC3));//change CV_8U3 to get format based on img_components param
 		frames.back()->create(window_height, window_width, CV_8UC3);	
 	}	
-	//Frames[i] = new Frame(window_width, window_height, image_components);
 
 	frameCounter = 0;
 	recording = true;
 	this->window_width = window_width;
 	this->window_height = window_height;
 	this->components = image_components;
-	this->fps = fps;
+	this->fps = target_fps;
 	
 	diskStoredFramesCounter = 0;
 
@@ -160,4 +159,43 @@ std::string Video::CreateFramesDirectory()
 	}
 	else 
 		throw std::exception("Something is rlllly wrong");
+}
+
+void Video::Update()
+{
+	if(video_frame_buffers.size() <= min_allocated_buffers)
+	{
+		OrderNewFrameBuffer();
+	}
+
+	for(std::vector<vfb_ptr>::iterator i = buffers_being_allocated.begin(); i != buffers_being_allocated.end();)
+	{
+		if((*i)->vfb_mutex.try_lock())
+		{
+			if( (*i)->ready )
+			{
+				video_frame_buffers.push_back((*i));
+
+				i = buffers_being_allocated.erase(i);
+
+				video_frame_buffers.back()->vfb_mutex.unlock();
+
+				continue;
+			}
+			else 
+				++i;
+		}
+
+	}
+}
+
+void Video::OrderNewFrameBuffer()
+{
+	vfb_ptr p = std::make_shared<VideoFrameBuffer>();
+	p->alloc_size = frame_buffer_size;
+	p->ready = false;
+	p->window_size = cv::Size(window_width, window_height);
+	p->_type = _type;
+	p->vfb_mutex.
+	//threadpool.schedule(AllocateFramesBuffer);
 }
