@@ -2,7 +2,9 @@
 
 ThreadTask::ThreadTask()
 {
+	have_task = false;
 	thread_running = false;
+	current_or_previous_task = NO_TASK;
 }
 
 bool ThreadTask::ThreadRunning()
@@ -12,8 +14,7 @@ bool ThreadTask::ThreadRunning()
 
 void ThreadTask::SetThreadFinished()
 {
-	disk_writing_task = NULL;
-	allocation_task = NULL;
+	have_task = false;
 	thread_running = false;
 }
 
@@ -24,26 +25,36 @@ void ThreadTask::SetThreadRunning()
 
 void ThreadTask::AddAllocationTask( std::shared_ptr<AllocationTask> task )
 {
-	if(!thread_running)
+	if(!thread_running &!have_task)
+	{
+		current_or_previous_task = ALLOCATION_TASK;
 		allocation_task = task;
+		have_task = true;
+	}
 	else
 		THREADING_EXCEPTION("thread is already running");
 }
 
 void ThreadTask::AddDiskTask( std::shared_ptr<DiskWritingTask> task )
 {
-	if(!thread_running)
+	if(!thread_running &!have_task)
+	{
 		disk_writing_task = task;
+		have_task = true;
+		current_or_previous_task = WRITING_TASK;
+	}
 	else
 		THREADING_EXCEPTION("thread is already running");
 }
 
-bool ThreadTask::NewTaskToRun()
+bool ThreadTask::HaveNewTaskToRun()
 {
-	if(disk_writing_task != NULL || allocation_task != NULL)
-		return true;
-	else 
-		return false;
+	return have_task;
+}
+
+CurrentOrPreviousTask ThreadTask::WhatTaskToRun()
+{
+	return current_or_previous_task;
 }
 
 std::shared_ptr<DiskWritingTask> ThreadTask::GetDiskTask()
@@ -77,3 +88,23 @@ void ThreadTask::WriteFramesToDisk( boost::thread::id thread_id )
 	video_writer->ReleaseMutex(thread_id);
 	video_frame_buffer->ReleaseMutex(thread_id);
 }
+
+std::shared_ptr<DiskWritingTask> ThreadTask::GetDiskWritingTask()
+{
+	if(!thread_running)
+	{
+		return disk_writing_task;
+	}
+	else THREADING_EXCEPTION("thread still running");
+}
+
+void ThreadTask::ClearOldInformation()
+{
+	allocation_task = NULL;
+	disk_writing_task = NULL;
+	current_or_previous_task = NO_TASK;
+	have_task = false;
+	thread_running = false;
+}
+
+	

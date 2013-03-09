@@ -22,7 +22,7 @@ public:
 
 	void StartThreads();
 
-	void Update();
+	void Update(std::vector<vfb_ptr>* none_main_thread_buffers);
 
 	void ScheduleAllocation(vfb_ptr	video_frame_buffer);
 
@@ -33,9 +33,13 @@ private:
 	std::deque<std::shared_ptr<DiskWritingTask>> disk_writing_task_queue;
 	std::deque<std::shared_ptr<AllocationTask>> allocation_task_queue;
 
+	std::vector<std::shared_ptr<DiskWritingTask>> disk_writing_tasks_finished;
+	std::vector<std::shared_ptr<AllocationTask>> allocation_tasks_finished;
+
+
 	std::shared_ptr<ThreadTask> thread_1_task;
 	std::shared_ptr<ThreadTask> thread_2_task;
-	std::vector<std::shared_ptr<ThreadTask>> thread_tasks;
+	std::vector<std::shared_ptr<ThreadTask>> thread_communicators;
 
 	std::shared_ptr<boost::thread> thread_1;
 	std::shared_ptr<boost::thread> thread_2;

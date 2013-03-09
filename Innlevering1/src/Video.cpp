@@ -37,6 +37,11 @@ void Video::ToggleRecording( unsigned int target_fps )
 			int codec =CV_FOURCC('X','V','I','D');
 			vw->open(outPath, codec, fps, cv::Size(window_width, window_height));
 			video_writer->ReleaseMutex(boost::this_thread::get_id());
+			OrderNewFrameBuffer();
+			OrderNewFrameBuffer();
+			OrderNewFrameBuffer();
+			OrderNewFrameBuffer();
+			OrderNewFrameBuffer();
 		}
 		else
 			THREADING_EXCEPTION("video writer object is in use");
@@ -60,6 +65,8 @@ bool Video::StoreFrame(float deltaTime)
 			recordTimer = 0.0f;
 			glReadBuffer(GL_FRONT);
 			
+			if(video_frame_buffers.size() == 0)
+				THREADING_EXCEPTION("no frame buffers ready to be written to");
 			Mat* img = video_frame_buffers.front()->GetNextFrame();
 			
 			glPixelStorei(GL_PACK_ALIGNMENT, (img->step & 3) ? 1 : 4);
@@ -83,10 +90,11 @@ bool Video::StoreFrame(float deltaTime)
 
 void Video::Update()
 {
-	thread_pool.Update();
-	if( (video_frame_buffers.size() + buffers_being_allocated.size()) < min_allocated_buffers)
+	thread_pool.Update(&buffers_being_allocated);
+	
+	if( video_frame_buffers.size() < min_allocated_buffers)
 	{
-		OrderNewFrameBuffer();
+		//OrderNewFrameBuffer();
 	}
 
 	for(std::vector<vfb_ptr>::iterator i = buffers_being_allocated.begin(); i != buffers_being_allocated.end();)
@@ -108,12 +116,12 @@ void Video::Update()
 
 void Video::OrderNewFrameBuffer()
 {
-	unsigned int allocated_memory_usage = window_width*window_height*image_components;
-	allocated_memory_usage *= (video_frame_buffers.size() + buffers_being_allocated.size() + 1);
-	if( allocated_memory_usage >= max_preallocated_bytes)
-	{
-		THREADING_EXCEPTION("too much memory usage");
-	}
+	//unsigned int allocated_memory_usage = window_width*window_height*image_components;
+	//allocated_memory_usage *= (video_frame_buffers.size() + buffers_being_allocated.size() + 1);
+	//if( allocated_memory_usage >= max_preallocated_bytes)
+	//{
+		//THREADING_EXCEPTION("too much memory usage");
+	//}
 
 	vfb_ptr p = std::make_shared<VideoFrameBuffer>(cv::Size(window_width, window_height), _type, frame_buffer_size);
 	buffers_being_allocated.push_back(p);

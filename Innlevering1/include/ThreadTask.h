@@ -46,6 +46,12 @@ struct AllocationTask
 	vfb_ptr	video_frame_buffer;
 };
 
+enum CurrentOrPreviousTask
+{
+	NO_TASK,
+	ALLOCATION_TASK,
+	WRITING_TASK
+};
 /**
 * A class that should be passed to a thread as it's access point to 
 * the main program thread. The class will recieve tasks from the 
@@ -87,7 +93,11 @@ public:
 	* @Returns: true when the queue associated with this class
 	* have a new task it can run
 	*/
-	bool NewTaskToRun();
+	bool HaveNewTaskToRun();
+
+	CurrentOrPreviousTask WhatTaskToRun();
+
+	void ClearOldInformation();
 
 	/**
 	* @Returns: the Disk writing task assigned to this class
@@ -104,8 +114,14 @@ public:
 	*/
 	void WriteFramesToDisk(boost::thread::id thread_id);
 
+	std::shared_ptr<DiskWritingTask> GetDiskWritingTask();
+
 private:
 	bool thread_running;
+
+	bool have_task;
+
+	CurrentOrPreviousTask current_or_previous_task;
 
 	std::shared_ptr<DiskWritingTask> disk_writing_task;
 	

@@ -43,7 +43,7 @@ void GameManager::createOpenGLContext()
 	main_window = SDL_CreateWindow("NITH - PG612 Example OpenGL Program", 
 									SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 									window_width, window_height, 
-									SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+									SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN /*| SDL_WINDOW_FULLSCREEN*/);
 	
 	if (!main_window) 
 	{
@@ -459,7 +459,7 @@ void GameManager::play()
 					ZoomOut();
 				if(event.key.keysym.sym == SDLK_p)
 				{
-					videoRecorder.ToggleRecording(30);
+					videoRecorder.ToggleRecording(60);
 					/*if(!SaveImagesToDisc)
 					{
 					SaveImagesToDisc = true;

@@ -89,7 +89,7 @@ private:
 
 	//When the size of video_frame_buffers hits this number,
 	//we allocate another buffer.
-	static const unsigned int min_allocated_buffers = 2;
+	static const unsigned int min_allocated_buffers = 10;
 
 	//If the size of allocated memory exceeds this number (bytes),
 	//an exception is thrown.
@@ -113,6 +113,7 @@ private:
 	* allocated and initialized on some thread
 	*/
 	std::vector<vfb_ptr> buffers_being_allocated;
+
 
 	unsigned int window_width, window_height, fps;
 

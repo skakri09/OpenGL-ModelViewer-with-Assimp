@@ -17,6 +17,10 @@
 #include <vector>
 #include <deque>
 
+#include "ThreadingException.h"
+
+#pragma region VideoWriterStruct
+
 struct VideoWriterMutexed
 {
 public:
@@ -27,7 +31,7 @@ public:
 	}
 	
 	/**
-	* Halts the caller thread untill it can lock the thread. When it's succsessfull
+	* Halts the caller thread until it can lock the thread. When it's successfully
 	* in locking the thread, or if it already owned this object, the video_writer 
 	* object is returned
 	* 
@@ -48,7 +52,7 @@ public:
 	}
 
 	/**
-	* Does a try_lock on this class. If it's succsessfull in locking the thread,
+	* Does a try_lock on this class. If it's successfully in locking the thread,
 	* or if it already owned this object, the video_writer object is returned
 	* 
 	* @Returns: a cv::VideoWriter object that can write frames to disk
@@ -68,7 +72,7 @@ public:
 			locked_in_ID = thread_id;
 			return video_writer;
 		}
-		//If the try_lock was unsuccessfull we return null
+		//If the try_lock was unsuccessfully we return null
 		else 
 			return NULL;
 	}
@@ -104,6 +108,10 @@ typedef std::shared_ptr<VideoWriterMutexed> vwm_ptr;
 */
 typedef std::shared_ptr<cv::VideoWriter> video_writer_ptr;
 
+#pragma endregion
+
+#pragma region VideoFrame
+
 struct VideoFrame
 {
 	VideoFrame(cv::Size window_size, int _type)
@@ -130,12 +138,15 @@ typedef std::shared_ptr<VideoFrame> vf_ptr;
 */
 typedef std::shared_ptr<std::deque<vf_ptr>> vf_deque_ptr;
 
+#pragma endregion
+
 enum VideoFrameBufferStatus
 {
 	NOT_INITIALIZED,
-	EMPTY,
-	FULL
+	FULL,
+	READ_FOR_REUSE
 };
+
 
 struct VideoFrameBuffer
 {
@@ -153,7 +164,7 @@ public:
 	}
 	
 	/**
-	* Halts the caller thread untill it can lock the thread. When it's succsessfull
+	* Halts the caller thread until it can lock the thread. When it's successfully
 	* in locking the thread, or if it already owned this object, the video_writer 
 	* object is returned
 	* 
@@ -174,7 +185,7 @@ public:
 	}
 
 	/**
-	* Does a try_lock on this class. If it's succsessfull in locking the thread,
+	* Does a try_lock on this class. If it's successfully in locking the thread,
 	* or if it already owned this object, the video_writer object is returned
 	* 
 	* @Returns: a cv::VideoWriter object that can write frames to disk
@@ -194,7 +205,7 @@ public:
 			locked_in_ID = thread_id;
 			return video_frames_buffer;
 		}
-		//If the try_lock was unsuccessfull we return null
+		//If the try_lock was unsuccessfully we return null
 		else 
 			return NULL;
 	}
@@ -225,8 +236,8 @@ public:
 			}
 		}
 
-		buffer_status = EMPTY;
-
+		buffer_status = READ_FOR_REUSE;
+		filled_frames = 0;
 		ready = true;
 		locked = false;
 		vfb_mutex.unlock();
@@ -263,14 +274,26 @@ public:
 
 	cv::Mat* GetNextFrame()
 	{
+		if(buffer_status == FULL)
+			THREADING_EXCEPTION("trying to access index buffer.size()+1");
 		std::shared_ptr<VideoFrame> vf = video_frames_buffer->at(filled_frames);
-		filled_frames++;
+		++filled_frames;
+		if(filled_frames == video_frames_buffer->size())
+			buffer_status = FULL;
 		return &vf->image;
 	}
 
 	bool BufferFilled()
 	{
 		return filled_frames >= video_frames_buffer->size();
+	}
+
+	void ResetBufferForReuse()
+	{
+		ready = true;
+		locked = false;
+		filled_frames = 0;
+		buffer_status = READ_FOR_REUSE;
 	}
 
 private: 
@@ -292,9 +315,6 @@ private:
 	boost::mutex vfb_mutex; //< Mutex object to lock access to the video_frames_buffer
 };
 
-
 typedef std::shared_ptr<VideoFrameBuffer> vfb_ptr;
-
-
 
 #endif // VideoThreadedUtil_h__
