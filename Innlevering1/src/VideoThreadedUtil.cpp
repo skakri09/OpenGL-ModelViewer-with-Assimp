@@ -33,19 +33,20 @@ void WriteFramesToDisk( vfb_ptr video_frame_buffer, vwm_ptr video_writer, bool f
 {
 	//placeholder for compiling. Change thread to actual thread:
 	boost::thread::id thread_id;
+
 	video_writer_ptr vid_writer = video_writer->Lock_GetVideoWriter(thread_id);
 	vf_deque_ptr vf_dq_ptr = video_frame_buffer->Lock_GetVideoFrameBuffer(thread_id);
 
-	for(unsigned int i = 0; i < video_frame_buffer->video_frames_buffer->size(); i++)
+	for(unsigned int i = 0; i < vf_dq_ptr->size(); i++)
 	{
-		vf_ptr p = video_frame_buffer->video_frames_buffer->at(i);
+		vf_ptr p = vf_dq_ptr->at(i);
 
 		if(flip)
 			p->Flip();
 
-		*video_writer->video_writer << *p->image;
+		*vid_writer << *p->image;
 	}
-
-	video_writer->vw_mutex.unlock();
-	video_frame_buffer->vfb_mutex.unlock();
+	
+	video_writer->ReleaseMutex(thread_id);
+	video_frame_buffer->ReleaseMutex(thread_id);
 }
