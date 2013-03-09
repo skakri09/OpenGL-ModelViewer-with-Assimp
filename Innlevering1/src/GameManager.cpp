@@ -459,7 +459,6 @@ void GameManager::play()
 					ZoomOut();
 				if(event.key.keysym.sym == SDLK_p)
 				{
-					videoRecorder.OrderNewFrameBuffer();
 					videoRecorder.ToggleRecording(30);
 					/*if(!SaveImagesToDisc)
 					{

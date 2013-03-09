@@ -111,7 +111,14 @@ struct VideoFrame
 		image = new cv::Mat(window_size, _type); 
 		image->create(window_size, _type);
 	}
-
+	~VideoFrame()
+	{
+		if(image)
+		{
+			delete image;
+			image = NULL;
+		}
+	}
 	void Flip()
 	{
 		cv::flip(*image, *image, 0);

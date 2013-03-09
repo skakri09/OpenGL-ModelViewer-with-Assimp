@@ -137,7 +137,7 @@ bool Video::StoreFrame(float deltaTime)
 			//set length of one complete row in destination data (doesn't need to equal img.cols)
 			glPixelStorei(GL_PACK_ROW_LENGTH, img->step/img->elemSize());
 
-			//glReadPixels(0, 0, img->cols, img->rows, GL_BGR, GL_UNSIGNED_BYTE, img->data);
+			glReadPixels(0, 0, img->cols, img->rows, GL_BGR, GL_UNSIGNED_BYTE, img->data);
 
 			//cv::flip(*img, *img, 0);
 			//*vw << *img;
