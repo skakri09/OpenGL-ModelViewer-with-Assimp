@@ -170,32 +170,26 @@ void Video::Update()
 
 	for(std::vector<vfb_ptr>::iterator i = buffers_being_allocated.begin(); i != buffers_being_allocated.end();)
 	{
-		if((*i)->vfb_mutex.try_lock())
+		if( (*i)->ReadyGet() != NULL )
 		{
-			if( (*i)->ready )
-			{
 				video_frame_buffers.push_back((*i));
 
 				i = buffers_being_allocated.erase(i);
 
-				video_frame_buffers.back()->vfb_mutex.unlock();
-
 				continue;
-			}
-			else 
-				++i;
 		}
-
+		else
+		{
+			++i;
+		}
 	}
 }
 
 void Video::OrderNewFrameBuffer()
 {
-	vfb_ptr p = std::make_shared<VideoFrameBuffer>();
-	p->alloc_size = frame_buffer_size;
-	p->ready = false;
-	p->window_size = cv::Size(window_width, window_height);
-	p->_type = _type;
-	p->vfb_mutex.
+	vfb_ptr p = std::make_shared<VideoFrameBuffer>(cv::Size(window_width, window_height), 
+													_type, frame_buffer_size);
+	
+
 	//threadpool.schedule(AllocateFramesBuffer);
 }
