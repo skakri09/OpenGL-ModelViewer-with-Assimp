@@ -181,6 +181,8 @@ void GameManager::init()
 	mouseX = mouseY = 0.0f;
 	SaveImagesToDisc = false;
 	frameCounter = 0;
+	
+	videoRecorder.Init(window_width,window_height);
 }
 
 void GameManager::renderMeshRecursive(MeshPart& mesh, const std::shared_ptr<Program>& program, 
@@ -475,6 +477,7 @@ void GameManager::play()
 				break;
 			}
 		}
+		videoRecorder.Update();
 		//Render, and swap front and back buffers
 		render();
 		SDL_GL_SwapWindow(main_window);
@@ -768,8 +771,8 @@ void GameManager::RotateLight()
 void GameManager::SaveImageToDisc( unsigned int window_width, unsigned int window_height, 
 									unsigned int* frameCounter, std::string format /*= ".bmp"*/ )
 {
-
-	SaveImagesToDisc = videoRecorder.StoreFrame(deltaTime);
+	//SaveImagesToDisc = 
+	videoRecorder.StoreFrame(deltaTime);
 	/*std::vector<unsigned char> pixelData;
 	pixelData.resize(window_width*window_height*3);
 	glReadBuffer(GL_FRONT);

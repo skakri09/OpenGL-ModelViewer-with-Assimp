@@ -34,22 +34,13 @@
 using namespace boost::filesystem;
 using namespace cv;
 
-//struct VideoFrame{
-//	VideoFrame(unsigned int window_width, 
-//		unsigned int window_height,
-//		unsigned int image_components)
-//	{
-//		data.resize(window_width*window_height*image_components);
-//	}
-//
-//	std::vector<unsigned char> data;
-//};
-
 class Video
 {
 public:
     Video();
     ~Video();
+
+	void Init(unsigned int window_width, unsigned int window_height);
 
 	/*
 	* Prepare the class for recording.
@@ -72,10 +63,8 @@ public:
 
 	void FinishRecordingAndSave();
 
-protected:
-
 private:
-
+	ThreadPool thread_pool;
 	//When the size of video_frame_buffers hits this number,
 	//we allocate another buffer.
 	static const unsigned int min_allocated_buffers = 2;

@@ -4,11 +4,21 @@
 Video::Video()
 {
 	recording = false;
+	
 	//namedWindow( "testwinName" );
+	
 }
 
 Video::~Video()
 {
+}
+
+
+void Video::Init(unsigned int window_width, unsigned int window_height)
+{
+	thread_pool.StartThreads();
+	this->window_width = window_width;
+	this->window_height = window_height;
 }
 
 void Video::PrepVideoRecording( unsigned int window_width, unsigned int window_height, 
@@ -74,6 +84,7 @@ void Video::PrepVideoRecording( unsigned int window_width, unsigned int window_h
 
 bool Video::StoreFrame(float deltaTime)
 {
+	recording = false;
 	if(recording)
 	{
 		recordTimer += deltaTime;
@@ -163,6 +174,7 @@ std::string Video::CreateFramesDirectory()
 
 void Video::Update()
 {
+	thread_pool.Update();
 	if(video_frame_buffers.size() <= min_allocated_buffers)
 	{
 		OrderNewFrameBuffer();
@@ -189,7 +201,6 @@ void Video::OrderNewFrameBuffer()
 {
 	vfb_ptr p = std::make_shared<VideoFrameBuffer>(cv::Size(window_width, window_height), 
 													_type, frame_buffer_size);
-	
-
-	//threadpool.schedule(AllocateFramesBuffer);
+	buffers_being_allocated.push_back(p);
+	thread_pool.ScheduleAllocation(p);
 }

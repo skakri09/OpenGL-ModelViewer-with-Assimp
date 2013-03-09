@@ -12,7 +12,6 @@
 #include "VideoThreadedUtil.h"
 
 
-
 struct DiskWritingTask
 {
 	DiskWritingTask(vfb_ptr vfb, vwm_ptr vw, bool flip)
@@ -40,9 +39,9 @@ struct AllocationTask
 class ThreadTask
 {
 public:
-	ThreadTask(std::shared_ptr<boost::thread> owner_thread)
+	ThreadTask()
 	{
-		this->owner_thread = owner_thread;
+		thread_running = false;
 	}
 
 	bool ThreadRunning()
@@ -94,13 +93,13 @@ public:
 		return allocation_task;
 	}
 
-	void WriteFramesToDisk()
+	void WriteFramesToDisk(boost::thread::id thread_id)
 	{
 		vfb_ptr video_frame_buffer = disk_writing_task->video_frame_buffer;
 		vwm_ptr video_writer = disk_writing_task->video_writer;
 
-		video_writer_ptr vid_writer = video_writer->Lock_GetVideoWriter(GetThreadID());
-		vf_deque_ptr vf_dq_ptr = video_frame_buffer->Lock_GetVideoFrameBuffer(GetThreadID());
+		video_writer_ptr vid_writer = video_writer->Lock_GetVideoWriter(thread_id);
+		vf_deque_ptr vf_dq_ptr = video_frame_buffer->Lock_GetVideoFrameBuffer(thread_id);
 
 		for(unsigned int i = 0; i < vf_dq_ptr->size(); i++)
 		{
@@ -112,22 +111,16 @@ public:
 			*vid_writer << *p->image;
 		}
 
-		video_writer->ReleaseMutex(GetThreadID());
-		video_frame_buffer->ReleaseMutex(GetThreadID());
+		video_writer->ReleaseMutex(thread_id);
+		video_frame_buffer->ReleaseMutex(thread_id);
 	}
 
-
-	boost::thread::id GetThreadID()
-	{
-		return owner_thread->get_id();
-	}
 
 private:
 	bool thread_running;
 	std::shared_ptr<DiskWritingTask> disk_writing_task;
 	std::shared_ptr<AllocationTask>  allocation_task;
 
-	std::shared_ptr<boost::thread> owner_thread;
 };
 
 

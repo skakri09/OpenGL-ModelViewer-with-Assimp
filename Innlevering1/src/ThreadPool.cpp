@@ -11,8 +11,8 @@ ThreadPool::~ThreadPool()
 
 void ThreadPool::StartThreads()
 {
-	thread_1_task = std::make_shared<ThreadTask>(thread_1);
-	thread_2_task = std::make_shared<ThreadTask>(thread_2);
+	thread_1_task = std::make_shared<ThreadTask>();
+	thread_2_task = std::make_shared<ThreadTask>();
 
 	thread_1 = std::make_shared<boost::thread>(Thread_1_func, thread_1_task);
 	thread_2 = std::make_shared<boost::thread>(Thread_2_func, thread_2_task);
@@ -30,12 +30,22 @@ void ThreadPool::Update()
 			if(!thread_tasks.at(i)->ThreadRunning())
 			{
 				thread_tasks.at(i)->AddDiskTask(disk_writing_task_queue.front());
+				disk_writing_task_queue.pop_front();
 			}
 		}
 	}
 	if(!allocation_task_queue.empty())
 	{
-
+		for(unsigned int i = 0; i < thread_tasks.size(); i++)
+		{
+			if(!thread_tasks.at(i)->ThreadRunning())
+			{
+				thread_tasks.at(i)->AddAllocationTask(allocation_task_queue.front());
+				allocation_task_queue.pop_front();
+			}
+			if(allocation_task_queue.empty())
+				break;
+		}
 	}
 }
 
@@ -54,8 +64,7 @@ void ThreadPool::ScheduleWriteToDisk( vfb_ptr video_frame_buffer,
 void Thread_1_func( std::shared_ptr<ThreadTask> thread_queue )
 {
 	bool running = true;
-	boost::thread::id thread_id = thread_queue->GetThreadID();
-
+	boost::thread::id thread_id = boost::this_thread::get_id();//thread_queue->GetThreadID();
 	while(running)
 	{
 		if(thread_queue->NewTaskToRun())
@@ -69,8 +78,12 @@ void Thread_1_func( std::shared_ptr<ThreadTask> thread_queue )
 
 			if(thread_queue->GetDiskTask() != NULL)
 			{
-				thread_queue->WriteFramesToDisk();
+				thread_queue->WriteFramesToDisk(thread_id);
 			}
+		}
+		else
+		{
+			boost::this_thread::sleep(boost::posix_time::millisec(100));//sleep for 100 millisec
 		}
 	}
 }
@@ -78,8 +91,7 @@ void Thread_1_func( std::shared_ptr<ThreadTask> thread_queue )
 void Thread_2_func( std::shared_ptr<ThreadTask> thread_queue )
 {
 	bool running = true;
-	boost::thread::id thread_id = thread_queue->GetThreadID();
-
+	boost::thread::id thread_id = boost::this_thread::get_id();//thread_queue->GetThreadID();
 	while(running)
 	{
 		if(thread_queue->NewTaskToRun())
@@ -93,8 +105,12 @@ void Thread_2_func( std::shared_ptr<ThreadTask> thread_queue )
 
 			if(thread_queue->GetDiskTask() != NULL)
 			{
-				thread_queue->WriteFramesToDisk();
+				thread_queue->WriteFramesToDisk(thread_id);
 			}
+		}
+		else
+		{
+			boost::this_thread::sleep(boost::posix_time::millisec(100));//sleep for 100 millisec
 		}
 	}
 }

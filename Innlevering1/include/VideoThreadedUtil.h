@@ -207,9 +207,13 @@ public:
 		}
 		if(locked && thread_id == locked_in_ID)
 		{
+			video_frames_buffer = std::make_shared<std::deque<std::shared_ptr<VideoFrame>>>();
 			// Creating the VideoFrame objects
 			for(unsigned int i=0; i < alloc_size; i++)
+			{
+				vf_ptr p = std::make_shared<VideoFrame>(window_size, _type);
 				video_frames_buffer->push_back(std::make_shared<VideoFrame>(window_size, _type));
+			}
 		}
 
 		ready = true;
