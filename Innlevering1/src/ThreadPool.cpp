@@ -36,6 +36,7 @@ void ThreadPool::Update()
 				break;
 		}
 	}
+
 	if(!allocation_task_queue.empty())
 	{
 		for(unsigned int i = 0; i < thread_tasks.size(); i++)
@@ -72,21 +73,17 @@ void Thread_main( std::shared_ptr<ThreadTask> thread_queue )
 		if(thread_queue->NewTaskToRun())
 		{
 			thread_queue->SetThreadRunning();
-			if(thread_queue->GetAllocationTask() != NULL && thread_queue->GetDiskTask() != NULL)
-			{
-				int breakhere = 0;
-			}
+
 			if(thread_queue->GetAllocationTask() != NULL)
 			{
 				thread_queue->GetAllocationTask()->video_frame_buffer->Lock_AllocAndInit(thread_id);
 			}
-
 			if(thread_queue->GetDiskTask() != NULL)
 			{
 				thread_queue->WriteFramesToDisk(thread_id);
 			}
 
-			thread_queue->SetThreadSleeping();
+			thread_queue->SetThreadFinished();
 		}
 		else
 			boost::this_thread::sleep(boost::posix_time::millisec(10));//sleep for 10 millisec

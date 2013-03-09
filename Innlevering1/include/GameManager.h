@@ -107,8 +107,8 @@ protected:
 	 */
 	void createVAO();
 
-	static const unsigned int window_width = 800;
-	static const unsigned int window_height = 600;
+	static const unsigned int window_width = 1280;
+	static const unsigned int window_height = 720;
 
 	void ZoomIn();
 

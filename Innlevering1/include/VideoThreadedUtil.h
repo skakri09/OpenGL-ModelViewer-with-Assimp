@@ -107,24 +107,27 @@ typedef std::shared_ptr<cv::VideoWriter> video_writer_ptr;
 struct VideoFrame
 {
 	VideoFrame(cv::Size window_size, int _type)
+		:image(window_size, _type)
 	{
-		image = new cv::Mat(window_size, _type); 
-		image->create(window_size, _type);
+		//image = new cv::Mat(window_size, _type); 
+		image.create(window_size, _type);
 	}
+	
 	~VideoFrame()
 	{
-		if(image)
+		/*if(image)
 		{
 			delete image;
 			image = NULL;
-		}
+		}*/
 	}
+	
 	void Flip()
 	{
-		cv::flip(*image, *image, 0);
+		cv::flip(image, image, 0);
 	}
 
-	cv::Mat* image;
+	cv::Mat image;
 };
 
 /*
@@ -136,6 +139,13 @@ typedef std::shared_ptr<VideoFrame> vf_ptr;
 * std::shared_ptr<std::deque<std::shared_ptr<VideoFrame>>> 
 */
 typedef std::shared_ptr<std::deque<vf_ptr>> vf_deque_ptr;
+
+enum VideoFrameBufferStatus
+{
+	NOT_INITIALIZED,
+	EMPTY,
+	FULL
+};
 
 struct VideoFrameBuffer
 {
@@ -149,6 +159,7 @@ public:
 		ready = false;
 		locked = false;
 		filled_frames = 0;
+		buffer_status = NOT_INITIALIZED;
 	}
 	
 	/**
@@ -224,6 +235,8 @@ public:
 			}
 		}
 
+		buffer_status = EMPTY;
+
 		ready = true;
 		locked = false;
 		vfb_mutex.unlock();
@@ -262,7 +275,7 @@ public:
 	{
 		std::shared_ptr<VideoFrame> vf = video_frames_buffer->at(filled_frames);
 		filled_frames++;
-		return vf->image;
+		return &vf->image;
 	}
 
 	bool BufferFilled()
@@ -272,6 +285,7 @@ public:
 
 private: 
 	vf_deque_ptr video_frames_buffer; //< Primary buffer, each entry in the buffer can store a frame
+	VideoFrameBufferStatus buffer_status;
 
 	cv::Size window_size; //< Window size, is used to set the size of each frame
 
@@ -288,26 +302,9 @@ private:
 	boost::mutex vfb_mutex; //< Mutex object to lock access to the video_frames_buffer
 };
 
-/*
-* std::shared_ptr<VideoFrameBuffer>
-*/
+
 typedef std::shared_ptr<VideoFrameBuffer> vfb_ptr;
 
-/**
-* Writes a the VideoFrameBuffer to disk with the provided VideoWriter
-* @Param video_Frame_buffer: The buffer to write from
-* @Param video_writer: the VideoWriter object to write with
-*/
-void WriteFramesToDisk(vfb_ptr video_frame_buffer, 
-					   vwm_ptr video_writer, bool flipp=true);
-
-
-/**
-* Allocates a given amount of Frames in the target buffer
-* @Param video_frame_buffer: shared ptr to a VideoFrameBuffer object
-* that should be allocated
-*/
-void AllocateFramesBuffer(vwm_ptr video_frame_buffer);
 
 
 #endif // VideoThreadedUtil_h__

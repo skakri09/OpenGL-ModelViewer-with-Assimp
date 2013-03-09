@@ -97,7 +97,7 @@ void Video::ToggleRecording( unsigned int target_fps )
 			this->fps = target_fps;
 			std::string outPath = CreateVideoName("video/", ".avi");
 			recordTimer = 0.0f;
-			int codec =CV_FOURCC('X','V','I','D');
+			int codec =0;//CV_FOURCC('X','V','I','D');
 			vw->open(outPath, codec, fps, cv::Size(window_width, window_height));
 			video_writer->ReleaseMutex(boost::this_thread::get_id());
 		}
@@ -151,13 +151,6 @@ bool Video::StoreFrame(float deltaTime)
 				video_frame_buffers.pop_front();
 
 				thread_pool.ScheduleWriteToDisk(p, video_writer, true);
-			}
-
-			if(frameCounter > Frames.size()-1)
-			{
-				vw->release();
-				//FinishRecordingAndSave();
-				return false;
 			}
 		}
 	}
@@ -245,8 +238,7 @@ void Video::OrderNewFrameBuffer()
 		THREADING_EXCEPTION("too much memory usage");
 	}
 
-	vfb_ptr p = std::make_shared<VideoFrameBuffer>(cv::Size(window_width, window_height), 
-													_type, frame_buffer_size);
+	vfb_ptr p = std::make_shared<VideoFrameBuffer>(cv::Size(window_width, window_height), _type, frame_buffer_size);
 	buffers_being_allocated.push_back(p);
 	thread_pool.ScheduleAllocation(p);
 }

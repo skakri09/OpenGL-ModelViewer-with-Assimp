@@ -49,7 +49,7 @@ public:
 		return thread_running;
 	}
 
-	void SetThreadSleeping()
+	void SetThreadFinished()
 	{
 		disk_writing_task = NULL;
 		allocation_task = NULL;

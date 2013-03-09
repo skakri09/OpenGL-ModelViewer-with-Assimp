@@ -70,14 +70,14 @@ private:
 	ThreadPool thread_pool;
 	//When the size of video_frame_buffers hits this number,
 	//we allocate another buffer.
-	static const unsigned int min_allocated_buffers = 2;
+	static const unsigned int min_allocated_buffers = 4;
 
 	//If the size of allocated memory exceeds this number (bytes),
 	//an exception is thrown.
 	static const unsigned int max_preallocated_bytes = 10000000;
 
 	//The amount of frames stored in each video_frame_buffer
-	static const unsigned int frame_buffer_size = 60;
+	static const unsigned int frame_buffer_size = 1;
 
 	// Storage type used for each color component in a frame buffer (unsigned char)
 	static const int _type = CV_8UC3;
