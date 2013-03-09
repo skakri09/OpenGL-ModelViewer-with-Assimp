@@ -10,7 +10,7 @@
 
 #include <boost/thread/thread.hpp>
 #include "VideoThreadedUtil.h"
-
+#include "ThreadingException.h"
 
 struct DiskWritingTask
 {
@@ -66,7 +66,7 @@ public:
 		if(!thread_running)
 			allocation_task = task;
 		else
-			throw std::exception("thread already running");
+			THREADING_EXCEPTION("thread is already running");
 	}
 	
 	void AddDiskTask(std::shared_ptr<DiskWritingTask> task)
@@ -74,7 +74,7 @@ public:
 		if(!thread_running)
 			disk_writing_task = task;
 		else
-			throw std::exception("thread already running");
+			THREADING_EXCEPTION("thread is already running");
 	}
 
 	bool NewTaskToRun()
@@ -153,8 +153,6 @@ private:
 	std::shared_ptr<boost::thread> thread_2;
 };
 
-void Thread_1_func(std::shared_ptr<ThreadTask> thread_queue);
-
-void Thread_2_func(std::shared_ptr<ThreadTask> thread_queue);
+void Thread_main(std::shared_ptr<ThreadTask> thread_queue);
 
 #endif // ThreadPool_h__

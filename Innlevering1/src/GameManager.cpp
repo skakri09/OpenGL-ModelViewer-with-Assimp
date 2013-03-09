@@ -288,7 +288,7 @@ void GameManager::render()
 	/*Rendering the directoryBrowser*/
 	dirBrowser->RenderDirectoryBrowser(mouseX, mouseY, mouseState);
 	
-	if(SaveImagesToDisc)
+	//if(SaveImagesToDisc)
 		SaveImageToDisc(window_width, window_height, &frameCounter);
 
 	CHECK_GL_ERROR();
@@ -459,11 +459,13 @@ void GameManager::play()
 					ZoomOut();
 				if(event.key.keysym.sym == SDLK_p)
 				{
-					if(!SaveImagesToDisc)
+					videoRecorder.OrderNewFrameBuffer();
+					videoRecorder.ToggleRecording(30);
+					/*if(!SaveImagesToDisc)
 					{
-						SaveImagesToDisc = true;
-						videoRecorder.PrepVideoRecording(window_width, window_height, 3, 30);
-					}
+					SaveImagesToDisc = true;
+					videoRecorder.PrepVideoRecording(window_width, window_height, 3, 30);
+					}*/
 				}
 
 				DetermineRenderMode(event.key.keysym.sym);

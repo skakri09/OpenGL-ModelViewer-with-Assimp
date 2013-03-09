@@ -22,6 +22,7 @@
     <ClInclude Include="include\PooledThread.h" />
     <ClInclude Include="include\TextRenderer.h" />
     <ClInclude Include="include\TextureFactory.h" />
+    <ClInclude Include="include\ThreadingException.h" />
     <ClInclude Include="include\ThreadPool.h" />
     <ClInclude Include="include\ThreadPool_old.h" />
     <ClInclude Include="include\Timer.h" />

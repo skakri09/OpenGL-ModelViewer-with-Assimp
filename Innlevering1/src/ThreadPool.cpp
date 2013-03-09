@@ -14,8 +14,8 @@ void ThreadPool::StartThreads()
 	thread_1_task = std::make_shared<ThreadTask>();
 	thread_2_task = std::make_shared<ThreadTask>();
 
-	thread_1 = std::make_shared<boost::thread>(Thread_1_func, thread_1_task);
-	thread_2 = std::make_shared<boost::thread>(Thread_2_func, thread_2_task);
+	thread_1 = std::make_shared<boost::thread>(Thread_main, thread_1_task);
+	thread_2 = std::make_shared<boost::thread>(Thread_main, thread_2_task);
 
 	thread_tasks.push_back(thread_1_task);
 	thread_tasks.push_back(thread_2_task);
@@ -32,6 +32,8 @@ void ThreadPool::Update()
 				thread_tasks.at(i)->AddDiskTask(disk_writing_task_queue.front());
 				disk_writing_task_queue.pop_front();
 			}
+			if(disk_writing_task_queue.empty())
+				break;
 		}
 	}
 	if(!allocation_task_queue.empty())
@@ -61,7 +63,7 @@ void ThreadPool::ScheduleWriteToDisk( vfb_ptr video_frame_buffer,
 }
 
 
-void Thread_1_func( std::shared_ptr<ThreadTask> thread_queue )
+void Thread_main( std::shared_ptr<ThreadTask> thread_queue )
 {
 	bool running = true;
 	boost::thread::id thread_id = boost::this_thread::get_id();//thread_queue->GetThreadID();
@@ -70,7 +72,10 @@ void Thread_1_func( std::shared_ptr<ThreadTask> thread_queue )
 		if(thread_queue->NewTaskToRun())
 		{
 			thread_queue->SetThreadRunning();
-			
+			if(thread_queue->GetAllocationTask() != NULL && thread_queue->GetDiskTask() != NULL)
+			{
+				int breakhere = 0;
+			}
 			if(thread_queue->GetAllocationTask() != NULL)
 			{
 				thread_queue->GetAllocationTask()->video_frame_buffer->Lock_AllocAndInit(thread_id);
@@ -80,39 +85,10 @@ void Thread_1_func( std::shared_ptr<ThreadTask> thread_queue )
 			{
 				thread_queue->WriteFramesToDisk(thread_id);
 			}
+
 			thread_queue->SetThreadSleeping();
 		}
 		else
-		{
-			boost::this_thread::sleep(boost::posix_time::millisec(100));//sleep for 100 millisec
-		}
-	}
-}
-
-void Thread_2_func( std::shared_ptr<ThreadTask> thread_queue )
-{
-	bool running = true;
-	boost::thread::id thread_id = boost::this_thread::get_id();//thread_queue->GetThreadID();
-	while(running)
-	{
-		if(thread_queue->NewTaskToRun())
-		{
-			thread_queue->SetThreadRunning();
-
-			if(thread_queue->GetAllocationTask() != NULL)
-			{
-				thread_queue->GetAllocationTask()->video_frame_buffer->Lock_AllocAndInit(thread_id);
-			}
-
-			if(thread_queue->GetDiskTask() != NULL)
-			{
-				thread_queue->WriteFramesToDisk(thread_id);
-			}
-			thread_queue->SetThreadSleeping();
-		}
-		else
-		{
-			boost::this_thread::sleep(boost::posix_time::millisec(100));//sleep for 100 millisec
-		}
+			boost::this_thread::sleep(boost::posix_time::millisec(10));//sleep for 10 millisec
 	}
 }

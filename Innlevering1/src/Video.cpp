@@ -19,6 +19,8 @@ void Video::Init(unsigned int window_width, unsigned int window_height)
 	thread_pool.StartThreads();
 	this->window_width = window_width;
 	this->window_height = window_height;
+
+	video_writer = std::make_shared<VideoWriterMutexed>();
 }
 
 void Video::PrepVideoRecording( unsigned int window_width, unsigned int window_height, 
@@ -82,23 +84,52 @@ void Video::PrepVideoRecording( unsigned int window_width, unsigned int window_h
 	recordTimer = 0.0f;
 }
 
+
+void Video::ToggleRecording( unsigned int target_fps )
+{
+	if(!recording)
+	{
+		
+		std::shared_ptr<cv::VideoWriter> vw = video_writer->Try_Lock_GetVideoWriter(boost::this_thread::get_id());
+		if(vw != NULL)
+		{
+			recording = true;
+			this->fps = target_fps;
+			std::string outPath = CreateVideoName("video/", ".avi");
+			recordTimer = 0.0f;
+			int codec =CV_FOURCC('X','V','I','D');
+			vw->open(outPath, codec, fps, cv::Size(window_width, window_height));
+			video_writer->ReleaseMutex(boost::this_thread::get_id());
+		}
+		else
+			THREADING_EXCEPTION("video writer object is in use");
+	}
+	else
+	{
+		recording = false;
+		video_writer->Lock_GetVideoWriter(boost::this_thread::get_id())->release();
+		//stop the recording
+	}
+}
+
 bool Video::StoreFrame(float deltaTime)
 {
-	recording = false;
 	if(recording)
 	{
 		recordTimer += deltaTime;
 		float shallWe = (float)1/(float)fps;
 		if(recordTimer > shallWe)
 		{
-			
 			recordTimer = 0.0f;
 			glReadBuffer(GL_FRONT);
 			//glReadPixels(0, 0, window_width, window_height, GL_RGB, GL_UNSIGNED_BYTE, &Frames[frameCounter]->data[0]);
 
 			//Mat m(window_width, window_height, CV_FOURCC('r','g','b','a'), &Frames.at(i)->data[0]);
 			//Mat img(window_width, window_height, CV_8UC3);
-			Mat* img = frames[frameCounter];
+
+
+			Mat* img = video_frame_buffers.front()->GetNextFrame(); //frames[frameCounter];
+
 			//img.create(window_height, window_width, CV_8UC3);
 			//use fast 4-byte alignment (default anyway) if possible
 			glPixelStorei(GL_PACK_ALIGNMENT, (img->step & 3) ? 1 : 4);
@@ -106,14 +137,22 @@ bool Video::StoreFrame(float deltaTime)
 			//set length of one complete row in destination data (doesn't need to equal img.cols)
 			glPixelStorei(GL_PACK_ROW_LENGTH, img->step/img->elemSize());
 
-			glReadPixels(0, 0, img->cols, img->rows, GL_BGR, GL_UNSIGNED_BYTE, img->data);
+			//glReadPixels(0, 0, img->cols, img->rows, GL_BGR, GL_UNSIGNED_BYTE, img->data);
 
-			cv::flip(*img, *img, 0);
-			*vw << *img;
+			//cv::flip(*img, *img, 0);
+			//*vw << *img;
 			//vw->write(img);
 			//imshow("framename", img);
-			++frameCounter;
+			//++frameCounter;
 			
+			if(video_frame_buffers.front()->BufferFilled())
+			{
+				vfb_ptr p = video_frame_buffers.front();
+				video_frame_buffers.pop_front();
+
+				thread_pool.ScheduleWriteToDisk(p, video_writer, true);
+			}
+
 			if(frameCounter > Frames.size()-1)
 			{
 				vw->release();
@@ -144,7 +183,7 @@ void Video::DumpFramesToDisk()
 	diskStoredFramesCounter += framesCount;
 }
 
-std::string Video::CreateFramesDirectory()
+std::string Video::CreateVideoName(std::string folder, std::string format)
 {
 	std::string framesDir;
 
@@ -162,20 +201,20 @@ std::string Video::CreateFramesDirectory()
 	}sResult.pop_back();
 	
 	
-	path p = "video/" + sResult;
-	if(!is_directory(p))
+	path p = folder + sResult+format;
+	if(!is_directory(p) && !is_regular_file(p))
 	{
-		create_directory(p);
-		return sResult;
+		//create_directory(p);
+		return p.string();
 	}
 	else 
-		throw std::exception("Something is rlllly wrong");
+		THREADING_EXCEPTION("Something is rlllly wrong");
 }
 
 void Video::Update()
 {
 	thread_pool.Update();
-	if(video_frame_buffers.size() <= min_allocated_buffers)
+	if( (video_frame_buffers.size() + buffers_being_allocated.size()) < min_allocated_buffers)
 	{
 		OrderNewFrameBuffer();
 	}
@@ -199,6 +238,13 @@ void Video::Update()
 
 void Video::OrderNewFrameBuffer()
 {
+	unsigned int allocated_memory_usage = window_width*window_height*image_components;
+	allocated_memory_usage *= (video_frame_buffers.size() + buffers_being_allocated.size() + 1);
+	if( allocated_memory_usage >= max_preallocated_bytes)
+	{
+		THREADING_EXCEPTION("too much memory usage");
+	}
+
 	vfb_ptr p = std::make_shared<VideoFrameBuffer>(cv::Size(window_width, window_height), 
 													_type, frame_buffer_size);
 	buffers_being_allocated.push_back(p);

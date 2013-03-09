@@ -75,6 +75,9 @@
     <ClInclude Include="include\VideoThreadedUtil.h">
       <Filter>Threading</Filter>
     </ClInclude>
+    <ClInclude Include="include\ThreadingException.h">
+      <Filter>Threading</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GameManager.cpp">

@@ -30,6 +30,7 @@
 
 #include "ThreadPool.h"
 #include "VideoThreadedUtil.h"
+#include "ThreadingException.h"
 
 using namespace boost::filesystem;
 using namespace cv;
@@ -51,6 +52,8 @@ public:
 	void PrepVideoRecording(unsigned int window_width, unsigned int window_height,
 							unsigned int image_components, unsigned int target_fps);
 
+	void ToggleRecording(unsigned int target_fps);
+
 	/**
 	* Takes care of getting new storage space for frames when needed.
 	*/
@@ -62,12 +65,16 @@ public:
 	bool StoreFrame(float deltaTime);
 
 	void FinishRecordingAndSave();
-
+		void OrderNewFrameBuffer();
 private:
 	ThreadPool thread_pool;
 	//When the size of video_frame_buffers hits this number,
 	//we allocate another buffer.
 	static const unsigned int min_allocated_buffers = 2;
+
+	//If the size of allocated memory exceeds this number (bytes),
+	//an exception is thrown.
+	static const unsigned int max_preallocated_bytes = 10000000;
 
 	//The amount of frames stored in each video_frame_buffer
 	static const unsigned int frame_buffer_size = 60;
@@ -75,8 +82,12 @@ private:
 	// Storage type used for each color component in a frame buffer (unsigned char)
 	static const int _type = CV_8UC3;
 
-	std::string CreateFramesDirectory();
+	static const int image_components = 3;
+	std::string CreateVideoName(std::string folder, std::string format);
 
+	/**
+	* Frame buffers ready to receive image data
+	*/
 	std::deque<vfb_ptr> video_frame_buffers;
 
 	/**
@@ -101,7 +112,7 @@ private:
 
 	void DumpFramesToDisk();
 
-	void OrderNewFrameBuffer();
+	vwm_ptr video_writer;
 
 	cv::VideoWriter* vw;
 };

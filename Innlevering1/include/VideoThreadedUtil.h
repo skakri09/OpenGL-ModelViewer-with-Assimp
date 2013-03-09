@@ -23,6 +23,7 @@ public:
 	VideoWriterMutexed()
 	{
 		locked = false;
+		video_writer = std::make_shared<cv::VideoWriter>();
 	}
 	
 	/**
@@ -140,6 +141,7 @@ public:
 		
 		ready = false;
 		locked = false;
+		filled_frames = 0;
 	}
 	
 	/**
@@ -188,7 +190,6 @@ public:
 		else 
 			return NULL;
 	}
-
 
 	/**
 	* Allocates and initializes the video_frames_buffer in this object.
@@ -250,6 +251,18 @@ public:
 		return ready;
 	}
 
+	cv::Mat* GetNextFrame()
+	{
+		std::shared_ptr<VideoFrame> vf = video_frames_buffer->at(filled_frames);
+		filled_frames++;
+		return vf->image;
+	}
+
+	bool BufferFilled()
+	{
+		return filled_frames >= video_frames_buffer->size();
+	}
+
 private: 
 	vf_deque_ptr video_frames_buffer; //< Primary buffer, each entry in the buffer can store a frame
 
@@ -258,6 +271,8 @@ private:
 	int _type; //< The type of each color component (CV_8UC3 equals unsigned char)
 
 	unsigned int alloc_size; //< Amount of frames to allocate and intitialize
+
+	unsigned int filled_frames; //< Number of frames already filled with image data
 
 	bool ready; //< Is the VideoFrameBuffer ready to be written to?
 
