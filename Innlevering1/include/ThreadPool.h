@@ -51,6 +51,8 @@ public:
 
 	void SetThreadSleeping()
 	{
+		disk_writing_task = NULL;
+		allocation_task = NULL;
 		thread_running = false;
 	}
 
@@ -92,7 +94,7 @@ public:
 	{
 		return allocation_task;
 	}
-
+	
 	void WriteFramesToDisk(boost::thread::id thread_id)
 	{
 		vfb_ptr video_frame_buffer = disk_writing_task->video_frame_buffer;

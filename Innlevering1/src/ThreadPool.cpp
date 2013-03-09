@@ -80,6 +80,7 @@ void Thread_1_func( std::shared_ptr<ThreadTask> thread_queue )
 			{
 				thread_queue->WriteFramesToDisk(thread_id);
 			}
+			thread_queue->SetThreadSleeping();
 		}
 		else
 		{
@@ -107,6 +108,7 @@ void Thread_2_func( std::shared_ptr<ThreadTask> thread_queue )
 			{
 				thread_queue->WriteFramesToDisk(thread_id);
 			}
+			thread_queue->SetThreadSleeping();
 		}
 		else
 		{
