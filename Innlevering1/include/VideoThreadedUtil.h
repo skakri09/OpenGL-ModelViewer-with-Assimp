@@ -272,8 +272,8 @@ typedef std::shared_ptr<VideoFrameBuffer> vfb_ptr;
 * @Param video_Frame_buffer: The buffer to write from
 * @Param video_writer: the VideoWriter object to write with
 */
-void WriteFramesToDisk(vfb_ptr video_frame_buffer,
-					   cv::VideoWriter* video_writer, bool flip=true);
+void WriteFramesToDisk(vfb_ptr video_frame_buffer, 
+					   vwm_ptr video_writer, bool flipp=true);
 
 
 /**
