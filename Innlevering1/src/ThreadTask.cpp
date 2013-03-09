@@ -1,6 +1,5 @@
 #include "ThreadTask.h"
 
-
 ThreadTask::ThreadTask()
 {
 	thread_running = false;
