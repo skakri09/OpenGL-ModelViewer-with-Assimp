@@ -289,7 +289,7 @@ void GameManager::render()
 	dirBrowser->RenderDirectoryBrowser(mouseX, mouseY, mouseState);
 	
 	//if(SaveImagesToDisc)
-		SaveImageToDisc(window_width, window_height, &frameCounter);
+	videoRecorder.StoreFrame(deltaTime);
 
 	CHECK_GL_ERROR();
 }
@@ -459,7 +459,7 @@ void GameManager::play()
 					ZoomOut();
 				if(event.key.keysym.sym == SDLK_p)
 				{
-					videoRecorder.ToggleRecording(60);
+					videoRecorder.ToggleRecording(0);
 					/*if(!SaveImagesToDisc)
 					{
 					SaveImagesToDisc = true;
@@ -768,32 +768,6 @@ void GameManager::RotateLight()
 	lightPosition = glm::vec3(sin(totalTime)*2, 1, 5+cos(totalTime));
 	lightView = glm::lookAt(lightPosition, glm::vec3(0), glm::vec3(0, 1, 0));
 }
-
-void GameManager::SaveImageToDisc( unsigned int window_width, unsigned int window_height, 
-									unsigned int* frameCounter, std::string format /*= ".bmp"*/ )
-{
-	//SaveImagesToDisc = 
-	videoRecorder.StoreFrame(deltaTime);
-	/*std::vector<unsigned char> pixelData;
-	pixelData.resize(window_width*window_height*3);
-	glReadBuffer(GL_FRONT);
-	glReadPixels(0, 0, window_width, window_height, GL_RGB, GL_UNSIGNED_BYTE, &pixelData[0]);
-	ILuint ImageName;
-
-	ilGenImages(1, &ImageName); 
-	ilBindImage(ImageName);
-	ilTexImage(window_width, window_height, 1, 3, IL_RGB, IL_UNSIGNED_BYTE, &pixelData[0]);
-
-	std::stringstream str;
-	std::string path = "video/frame";
-	str<<path<<++*frameCounter<<format;*/
-
-	//ilSaveImage(str.str().c_str());
-}
-
-
-
-
 
 
 

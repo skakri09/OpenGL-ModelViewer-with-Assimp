@@ -235,9 +235,6 @@ private:
 	bool SaveImagesToDisc;
 	unsigned int frameCounter;
 	
-	void SaveImageToDisc(unsigned int window_width, unsigned int window_height,
-					unsigned int* frameCounter, std::string format = ".bmp");
-
 	Video videoRecorder;
 };
 

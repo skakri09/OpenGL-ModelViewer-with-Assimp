@@ -35,7 +35,7 @@ void Video::ToggleRecording( unsigned int target_fps )
 			std::string outPath = CreateVideoName("video/", ".avi");
 			recordTimer = 0.0f;
 			int codec =CV_FOURCC('X','V','I','D');
-			vw->open(outPath, codec, fps, cv::Size(window_width, window_height));
+			vw->open(outPath, codec, 10, cv::Size(window_width, window_height));
 			video_writer->ReleaseMutex(boost::this_thread::get_id());
 			OrderNewFrameBuffer();
 			OrderNewFrameBuffer();
@@ -54,25 +54,29 @@ void Video::ToggleRecording( unsigned int target_fps )
 	}
 }
 
-bool Video::StoreFrame(float deltaTime)
+void Video::StoreFrame(float deltaTime)
 {
 	if(recording)
 	{
 		recordTimer += deltaTime;
-		float shallWe = (float)1/(float)fps;
-		if(recordTimer > shallWe)
+		if(fps == 0 || (recordTimer > (1.0f/(float)fps)) )
 		{
+			if(video_frame_buffers.size() == 0)
+			{
+				//THREADING_EXCEPTION("no frame buffers ready to be written to");
+				std::cout << "THREADING_EXCEPTION(\"no frame buffers ready to be written to\");" << std::endl;
+				OrderNewFrameBuffer();
+				return;
+			}
 			recordTimer = 0.0f;
 			glReadBuffer(GL_FRONT);
-			
-			if(video_frame_buffers.size() == 0)
-				THREADING_EXCEPTION("no frame buffers ready to be written to");
+
 			Mat* img = video_frame_buffers.front()->GetNextFrame();
 			
-			glPixelStorei(GL_PACK_ALIGNMENT, (img->step & 3) ? 1 : 4);
-			glPixelStorei(GL_PACK_ROW_LENGTH, img->step/img->elemSize());
+			//glPixelStorei(GL_PACK_ALIGNMENT, (img->step & 3) ? 1 : 4);
+			//glPixelStorei(GL_PACK_ROW_LENGTH, img->step/img->elemSize());
 
-			glReadPixels(0, 0, img->cols, img->rows, GL_BGR, GL_UNSIGNED_BYTE, img->data);
+			//glReadPixels(0, 0, img->cols, img->rows, GL_BGR, GL_UNSIGNED_BYTE, img->data);
 
 			if(video_frame_buffers.front()->BufferFilled())
 			{
@@ -81,10 +85,9 @@ bool Video::StoreFrame(float deltaTime)
 
 				thread_pool.ScheduleWriteToDisk(p, video_writer, true);
 			}
-			img = NULL;
+			//img = NULL;
 		}
 	}
-	return true;	
 }
 
 
@@ -92,9 +95,9 @@ void Video::Update()
 {
 	thread_pool.Update(&buffers_being_allocated);
 	
-	if( video_frame_buffers.size() < min_allocated_buffers)
+	if( (video_frame_buffers.size() + buffers_being_allocated.size()) < min_allocated_buffers)
 	{
-		//OrderNewFrameBuffer();
+		OrderNewFrameBuffer();
 	}
 
 	for(std::vector<vfb_ptr>::iterator i = buffers_being_allocated.begin(); i != buffers_being_allocated.end();)
