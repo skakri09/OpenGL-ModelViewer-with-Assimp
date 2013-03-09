@@ -19,12 +19,12 @@
     <ClInclude Include="include\GLUtils\Program.hpp" />
     <ClInclude Include="include\GLUtils\VBO.hpp" />
     <ClInclude Include="include\Model.h" />
-    <ClInclude Include="include\PooledThread.h" />
     <ClInclude Include="include\TextRenderer.h" />
     <ClInclude Include="include\TextureFactory.h" />
     <ClInclude Include="include\ThreadingException.h" />
     <ClInclude Include="include\ThreadPool.h" />
     <ClInclude Include="include\ThreadPool_old.h" />
+    <ClInclude Include="include\ThreadTask.h" />
     <ClInclude Include="include\Timer.h" />
     <ClInclude Include="include\VideoThreadedUtil.h" />
     <ClInclude Include="include\VirtualTrackball.h" />
@@ -36,11 +36,11 @@
     <ClCompile Include="src\GameManager.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Model.cpp" />
-    <ClCompile Include="src\PooledThread.cpp" />
     <ClCompile Include="src\TextRenderer.cpp" />
     <ClCompile Include="src\TextureFactory.cpp" />
     <ClCompile Include="src\ThreadPool.cpp" />
     <ClCompile Include="src\ThreadPool_old.cpp" />
+    <ClCompile Include="src\ThreadTask.cpp" />
     <ClCompile Include="src\Video.cpp" />
     <ClCompile Include="src\VideoThreadedUtil.cpp" />
     <ClCompile Include="src\VirtualTrackball.cpp" />

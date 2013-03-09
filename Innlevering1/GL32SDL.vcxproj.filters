@@ -69,13 +69,13 @@
     <ClInclude Include="include\ThreadPool.h">
       <Filter>Threading</Filter>
     </ClInclude>
-    <ClInclude Include="include\PooledThread.h">
-      <Filter>Threading</Filter>
-    </ClInclude>
     <ClInclude Include="include\VideoThreadedUtil.h">
       <Filter>Threading</Filter>
     </ClInclude>
     <ClInclude Include="include\ThreadingException.h">
+      <Filter>Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ThreadTask.h">
       <Filter>Threading</Filter>
     </ClInclude>
   </ItemGroup>
@@ -113,10 +113,10 @@
     <ClCompile Include="src\ThreadPool.cpp">
       <Filter>Threading</Filter>
     </ClCompile>
-    <ClCompile Include="src\PooledThread.cpp">
+    <ClCompile Include="src\VideoThreadedUtil.cpp">
       <Filter>Threading</Filter>
     </ClCompile>
-    <ClCompile Include="src\VideoThreadedUtil.cpp">
+    <ClCompile Include="src\ThreadTask.cpp">
       <Filter>Threading</Filter>
     </ClCompile>
   </ItemGroup>

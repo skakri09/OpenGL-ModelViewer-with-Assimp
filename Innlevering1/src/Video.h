@@ -3,8 +3,37 @@
     filename:   Video.h
     author:     Kristian Skarseth
     
-    purpose:    
+    purpose:   
+
+	*--------------------------------------------------------------------
+	* Possible list of codecs: http://www.fourcc.org/codecs.php
+	* 
+	* List of current successful codecs, followed
+	* by the filesize on a 800*600, 30fps 4sec clip:
+	* ------------------------------------------------
+	* 0 (default out, uncompressed .avi)	81	 MB
+	* CV_FOURCC('X','V','I','D')			1.41 MB
+	* CV_FOURCC('D','X','5','0')			1.56 MB
+	* CV_FOURCC('F','L','V','1')			1.73 MB
+	* CV_FOURCC('D','I','V','X')			1.50 MB
+	* CV_FOURCC('M','J','P','G')			3.66 MB
+	*
+	* -----------------------------------------------
+	* Equal test with 1920*1080 resolution:
+	* -----------------------------------------------
+	* 0 (default out, uncompressed .avi)	355	 MB, 200 FPS @ 1 core(3.8Ghz)
+	* CV_FOURCC('X','V','I','D')			4.42 MB, 34  FPS @ 1 core(3.8Ghz)
+	* CV_FOURCC('M','J','P','G')			12.9 MB, 23  FPS @ 1 core(3.8Ghz)
+	*
+	* -----------------------------------------------
+	* 1920*1080 resolution, preallocated and created Matrices:
+	* -----------------------------------------------
+	* CV_FOURCC('X','V','I','D')			3.29 MB, 130 FPS @ 1 core(3.8Ghz)
+	*
+	*--------------------------------------------------------------------
+
 *********************************************************************/
+
 #ifndef Video_h__
 #define Video_h__
 
@@ -43,15 +72,6 @@ public:
 
 	void Init(unsigned int window_width, unsigned int window_height);
 
-	/*
-	* Prepare the class for recording.
-	* @Param window_width/window_height: Dimensions of the screen
-	* @Param image_components: Currently only 3 supported (RGB)
-	* @Param target_fps: target frames per seconds for the recording
-	*/
-	void PrepVideoRecording(unsigned int window_width, unsigned int window_height,
-							unsigned int image_components, unsigned int target_fps);
-
 	void ToggleRecording(unsigned int target_fps);
 
 	/**
@@ -64,17 +84,16 @@ public:
 	*/
 	bool StoreFrame(float deltaTime);
 
-	void FinishRecordingAndSave();
-		void OrderNewFrameBuffer();
 private:
 	ThreadPool thread_pool;
+
 	//When the size of video_frame_buffers hits this number,
 	//we allocate another buffer.
-	static const unsigned int min_allocated_buffers = 4;
+	static const unsigned int min_allocated_buffers = 2;
 
 	//If the size of allocated memory exceeds this number (bytes),
 	//an exception is thrown.
-	static const unsigned int max_preallocated_bytes = 10000000;
+	static const unsigned int max_preallocated_bytes = 100000000;
 
 	//The amount of frames stored in each video_frame_buffer
 	static const unsigned int frame_buffer_size = 1;
@@ -83,7 +102,6 @@ private:
 	static const int _type = CV_8UC3;
 
 	static const int image_components = 3;
-	std::string CreateVideoName(std::string folder, std::string format);
 
 	/**
 	* Frame buffers ready to receive image data
@@ -96,25 +114,17 @@ private:
 	*/
 	std::vector<vfb_ptr> buffers_being_allocated;
 
-	std::vector<Mat*> frames;
-	std::deque<VideoFrame*> Frames;
+	unsigned int window_width, window_height, fps;
 
-	unsigned int window_width, window_height;
-	unsigned int fps;
-	unsigned int frameCounter;
-	unsigned int components;
 	float recordTimer;
-
-	unsigned int diskStoredFramesCounter;
-	std::string currentVideoSubFolder;
 
 	bool recording;
 
-	void DumpFramesToDisk();
-
 	vwm_ptr video_writer;
 
-	cv::VideoWriter* vw;
+	void OrderNewFrameBuffer();
+
+	std::string CreateVideoName(std::string folder, std::string format);
 };
 
 

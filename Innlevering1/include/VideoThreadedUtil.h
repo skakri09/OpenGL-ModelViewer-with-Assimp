@@ -109,17 +109,7 @@ struct VideoFrame
 	VideoFrame(cv::Size window_size, int _type)
 		:image(window_size, _type)
 	{
-		//image = new cv::Mat(window_size, _type); 
 		image.create(window_size, _type);
-	}
-	
-	~VideoFrame()
-	{
-		/*if(image)
-		{
-			delete image;
-			image = NULL;
-		}*/
 	}
 	
 	void Flip()
