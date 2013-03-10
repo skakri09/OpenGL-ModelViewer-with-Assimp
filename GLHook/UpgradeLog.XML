@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type='text/xsl' href='_UpgradeReport_Files/UpgradeReport.xslt'?><UpgradeLog>
+<Properties><Property Name="Solution" Value="GLHook">
+</Property><Property Name="Solution File" Value="C:\PG612\PG612-Innlevering1\GLHook\GLHook.sln">
+</Property><Property Name="User Options File" Value="C:\PG612\PG612-Innlevering1\GLHook\GLHook.suo">
+</Property><Property Name="Date" Value="10. mars 2013">
+</Property><Property Name="Time" Value="20:39">
+</Property></Properties><Event ErrorLevel="0" Project="" Source="GLHook.sln" Description="File successfully backed up as C:\PG612\PG612-Innlevering1\GLHook\GLHook.sln.old">
+</Event><Event ErrorLevel="0" Project="" Source="GLHook.suo" Description="File successfully backed up as C:\PG612\PG612-Innlevering1\GLHook\GLHook.suo.old">
+</Event><Event ErrorLevel="0" Project="GLHook" Source="GLHook\GLHook.vcproj" Description="Converting project file 'C:\PG612\PG612-Innlevering1\GLHook\GLHook\GLHook.vcproj'.">
+</Event><Event ErrorLevel="1" Project="GLHook" Source="GLHook\GLHook.vcproj" Description="VCWebServiceProxyGeneratorTool is no longer supported. The tool has been removed from your project settings.">
+</Event><Event ErrorLevel="0" Project="GLHook" Source="GLHook\GLHook.vcproj" Description="Done converting to new project file 'C:\PG612\PG612-Innlevering1\GLHook\GLHook\GLHook.vcxproj'.">
+</Event><Event ErrorLevel="3" Project="GLHook" Source="GLHook\GLHook.vcproj" Description="Converted">
+</Event><Event ErrorLevel="0" Project="" Source="GLHook.sln" Description="Solution converted successfully">
+</Event><Event ErrorLevel="3" Project="" Source="GLHook.sln" Description="Converted">
+</Event></UpgradeLog>

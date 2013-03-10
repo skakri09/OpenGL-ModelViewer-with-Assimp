@@ -180,9 +180,22 @@ std::string Video::CreateVideoName(std::string folder, std::string format)
 	path p = folder + sResult+format;
 	if(!is_directory(p) && !is_regular_file(p))
 	{
-		//create_directory(p);
+		
 		return p.string();
 	}
-	else 
-		THREADING_EXCEPTION("Something is rlllly wrong");
+	else
+	{
+		unsigned int version_counter = 1;
+		
+		while(is_directory(p) || is_regular_file(p))
+		{
+			std::stringstream test_stream;
+			test_stream << sResult << "-" << version_counter;
+			p = folder + test_stream.str() + format;
+
+			version_counter++;
+		}
+
+		return p.string();
+	}
 }
