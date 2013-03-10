@@ -21,7 +21,7 @@ void Video::Init(unsigned int window_width, unsigned int window_height)
 	this->window_width = window_width;
 	this->window_height = window_height;
 
-	mem_size = window_width*window_height*num_components;
+	mem_size = window_width*window_height*image_components;
 
 	glGenBuffers(NUM_PBO, pbos);
 

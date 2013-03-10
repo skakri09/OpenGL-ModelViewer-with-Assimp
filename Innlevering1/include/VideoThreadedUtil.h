@@ -19,7 +19,6 @@
 
 #include "ThreadingException.h"
 
-#pragma region VideoWriterStruct
 
 struct VideoWriterMutexed
 {
@@ -108,7 +107,6 @@ typedef std::shared_ptr<VideoWriterMutexed> vwm_ptr;
 */
 typedef std::shared_ptr<cv::VideoWriter> video_writer_ptr;
 
-#pragma endregion
 
 #pragma region VideoFrame
 
@@ -316,7 +314,6 @@ private:
 };
 
 typedef std::shared_ptr<VideoFrameBuffer> vfb_ptr;
-
 
 
 #endif // VideoThreadedUtil_h__

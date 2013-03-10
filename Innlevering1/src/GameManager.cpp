@@ -292,9 +292,6 @@ void GameManager::render()
 	if(SaveImagesToDisc)
 		videoRecorder.StoreFrame(deltaTime);
 
-	//if(!SaveImagesToDisc)
-	//	ReadBack(window_width, window_height);
-
 	CHECK_GL_ERROR();
 }
 
@@ -463,7 +460,7 @@ void GameManager::play()
 					ZoomOut();
 				if(event.key.keysym.sym == SDLK_p)
 				{
-					videoRecorder.ToggleRecording(200);
+					videoRecorder.ToggleRecording(120);
 					SaveImagesToDisc = !SaveImagesToDisc;
 					/*if(!SaveImagesToDisc)
 					{

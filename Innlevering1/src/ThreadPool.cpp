@@ -11,14 +11,14 @@ ThreadPool::~ThreadPool()
 
 void ThreadPool::StartThreads()
 {
-	thread_1_task = std::make_shared<ThreadTask>();
-	thread_2_task = std::make_shared<ThreadTask>();
+	thread_1_task = std::make_shared<ThreadedEncodeWriter>();
+	//thread_2_task = std::make_shared<ThreadTask>();
 
 	thread_1 = std::make_shared<boost::thread>(Thread_main, thread_1_task);
-	thread_2 = std::make_shared<boost::thread>(Thread_main, thread_2_task);
+	//thread_2 = std::make_shared<boost::thread>(Thread_main, thread_2_task);
 
 	thread_communicators.push_back(thread_1_task);
-	thread_communicators.push_back(thread_2_task);
+	//thread_communicators.push_back(thread_2_task);
 }
 
 void ThreadPool::Update(std::vector<vfb_ptr>* none_main_thread_buffers)
@@ -30,14 +30,13 @@ void ThreadPool::Update(std::vector<vfb_ptr>* none_main_thread_buffers)
 		{
 			if(thread_communicators.at(i)->WhatTaskToRun() == WRITING_TASK)
 			{
-				none_main_thread_buffers->push_back(thread_communicators.at(i)->GetDiskWritingTask()->video_frame_buffer);
+				none_main_thread_buffers->push_back(thread_communicators.at(i)->GetDiskWritingTasksForRecycle()->video_frame_buffer);
 				none_main_thread_buffers->back()->ResetBufferForReuse();
 				thread_communicators.at(i)->ClearOldInformation();
 			}
 				
 		}
 	}
-
 
 	if(!disk_writing_task_queue.empty())
 	{
@@ -81,24 +80,28 @@ void ThreadPool::ScheduleWriteToDisk( vfb_ptr video_frame_buffer,
 }
 
 
-void Thread_main( std::shared_ptr<ThreadTask> thread_queue )
+void Thread_main( std::shared_ptr<ThreadedEncodeWriter> thread_queue )
 {
 	bool run_thread = true;
 	boost::thread::id thread_id = boost::this_thread::get_id();
+
 	while(run_thread)
 	{
+
 		if(thread_queue->HaveNewTaskToRun())
 		{
 			thread_queue->SetThreadRunning();
+		
+			thread_queue->WriteFramesToDisk(thread_id);
 
-			if(thread_queue->WhatTaskToRun() == ALLOCATION_TASK)
+			/*if(thread_queue->WhatTaskToRun() == ALLOCATION_TASK)
 			{
-				thread_queue->GetAllocationTask()->video_frame_buffer->Lock_AllocAndInit(thread_id);
-			}
-			else if(thread_queue->WhatTaskToRun() == WRITING_TASK)
+			thread_queue->GetAllocationTask()->video_frame_buffer->Lock_AllocAndInit(thread_id);
+			}*/
+			/*else if(thread_queue->WhatTaskToRun() == WRITING_TASK)
 			{
 				thread_queue->WriteFramesToDisk(thread_id);
-			}
+			}*/
 
 			thread_queue->SetThreadFinished();
 		}

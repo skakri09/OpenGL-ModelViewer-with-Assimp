@@ -1,29 +1,43 @@
 #include "ThreadTask.h"
 
-ThreadTask::ThreadTask()
+ThreadedEncodeWriter::ThreadedEncodeWriter()
 {
 	have_task = false;
 	thread_running = false;
 	current_or_previous_task = NO_TASK;
 }
 
-bool ThreadTask::ThreadRunning()
+
+void ThreadedEncodeWriter::BeginWriting( const std::string& filename, int fourcc, double fps,
+									cv::Size frameSize, bool isColor )
+{
+	video_writer.open(filename, fourcc, fps, frameSize, isColor);
+}
+
+
+void ThreadedEncodeWriter::FinishWriting()
+{
+	finish_writing = true;
+}
+
+
+bool ThreadedEncodeWriter::ThreadRunning()
 {
 	return thread_running;
 }
 
-void ThreadTask::SetThreadFinished()
+void ThreadedEncodeWriter::SetThreadFinished()
 {
 	have_task = false;
 	thread_running = false;
 }
 
-void ThreadTask::SetThreadRunning()
+void ThreadedEncodeWriter::SetThreadRunning()
 {
 	thread_running = true;
 }
 
-void ThreadTask::AddAllocationTask( std::shared_ptr<AllocationTask> task )
+void ThreadedEncodeWriter::AddAllocationTask( std::shared_ptr<AllocationTask> task )
 {
 	if(!thread_running &!have_task)
 	{
@@ -35,11 +49,11 @@ void ThreadTask::AddAllocationTask( std::shared_ptr<AllocationTask> task )
 		THREADING_EXCEPTION("thread is already running");
 }
 
-void ThreadTask::AddDiskTask( std::shared_ptr<DiskWritingTask> task )
+void ThreadedEncodeWriter::AddDiskTask( std::shared_ptr<DiskWritingTask> task )
 {
-	if(!thread_running &!have_task)
+	if(!thread_running && !have_task)
 	{
-		disk_writing_task = task;
+		disk_writing_tasks = task;
 		have_task = true;
 		current_or_previous_task = WRITING_TASK;
 	}
@@ -47,64 +61,77 @@ void ThreadTask::AddDiskTask( std::shared_ptr<DiskWritingTask> task )
 		THREADING_EXCEPTION("thread is already running");
 }
 
-bool ThreadTask::HaveNewTaskToRun()
+
+void ThreadedEncodeWriter::AddWritingTasks( std::shared_ptr<std::deque<DiskWritingTask>> tasks )
+{
+	if(!thread_running && !have_task)
+		disk_writing_tasks->insert(disk_writing_tasks->back(), tasks->begin(), tasks->end());
+	else
+		THREADING_EXCEPTION("thread is already running");
+}
+
+bool ThreadedEncodeWriter::HaveNewTaskToRun()
 {
 	return have_task;
 }
 
-CurrentOrPreviousTask ThreadTask::WhatTaskToRun()
+CurrentOrPreviousTask ThreadedEncodeWriter::WhatTaskToRun()
 {
 	return current_or_previous_task;
 }
 
-std::shared_ptr<DiskWritingTask> ThreadTask::GetDiskTask()
+std::shared_ptr<std::deque<DiskWritingTask>> ThreadedEncodeWriter::GetTasks()
 {
-	return disk_writing_task;
+	return disk_writing_tasks;
 }
 
-std::shared_ptr<AllocationTask> ThreadTask::GetAllocationTask()
-{
-	return allocation_task;
-}
-
-void ThreadTask::WriteFramesToDisk( boost::thread::id thread_id )
-{
-	vfb_ptr video_frame_buffer = disk_writing_task->video_frame_buffer;
-	vwm_ptr video_writer = disk_writing_task->video_writer;
-
-	video_writer_ptr vid_writer = video_writer->Lock_GetVideoWriter(thread_id);
-	vf_deque_ptr vf_dq_ptr = video_frame_buffer->Lock_GetVideoFrameBuffer(thread_id);
-
-	for(unsigned int i = 0; i < vf_dq_ptr->size(); i++)
-	{
-		vf_ptr p = vf_dq_ptr->at(i);
-
-		if(disk_writing_task->flip)
-			p->Flip();
-
-		*vid_writer << p->image;
-	}
-
-	video_writer->ReleaseMutex(thread_id);
-	video_frame_buffer->ReleaseMutex(thread_id);
-}
-
-std::shared_ptr<DiskWritingTask> ThreadTask::GetDiskWritingTask()
+std::shared_ptr<std::deque<DiskWritingTask>> ThreadedEncodeWriter::GetDiskWritingTasksForRecycle()
 {
 	if(!thread_running)
 	{
-		return disk_writing_task;
+		return disk_writing_tasks;
 	}
 	else THREADING_EXCEPTION("thread still running");
 }
 
-void ThreadTask::ClearOldInformation()
+std::shared_ptr<AllocationTask> ThreadedEncodeWriter::GetAllocationTask()
 {
-	allocation_task = NULL;
-	disk_writing_task = NULL;
-	current_or_previous_task = NO_TASK;
+	return allocation_task;
+}
+
+void ThreadedEncodeWriter::WriteFramesToDisk( boost::thread::id thread_id )
+{
+	if(video_writer.isOpened())
+	{
+		for(unsigned int i = 0; i < disk_writing_tasks->size(); i++)
+		{
+			vfb_ptr video_frame_buffer = disk_writing_tasks->at(i)->video_frame_buffer;
+			vf_deque_ptr vf_dq_ptr = video_frame_buffer->Lock_GetVideoFrameBuffer(thread_id);
+
+			for(unsigned int x = 0; x < vf_dq_ptr->size(); x++)
+			{
+				vf_ptr p = vf_dq_ptr->at(x);
+
+				if(disk_writing_tasks->at(i)->flip)
+					p->Flip();
+
+				*video_writer << p->image;
+			}
+			video_frame_buffer->ReleaseMutex(thread_id);
+		}
+	}
+	else
+		THREADING_EXCEPTION("videowriter is not open");
+}
+
+
+
+void ThreadedEncodeWriter::ClearOldInformation()
+{
+	disk_writing_tasks->clear();
 	have_task = false;
 	thread_running = false;
 }
+
 
 	

@@ -12,6 +12,8 @@
 #ifndef ThreadTask_h__
 #define ThreadTask_h__
 
+#include <deque>
+
 #include "VideoThreadedUtil.h"
 #include "ThreadingException.h"
 
@@ -21,15 +23,13 @@
 */
 struct DiskWritingTask
 {
-	DiskWritingTask(vfb_ptr vfb, vwm_ptr vw, bool flip)
+	DiskWritingTask(vfb_ptr vfb, bool flip)
 	{
 		this->video_frame_buffer = vfb;
-		this->video_writer = vw;
 		this->flip = flip;
 	}
 
 	vfb_ptr video_frame_buffer;
-	vwm_ptr video_writer; 
 	bool flip;
 };
 
@@ -57,10 +57,15 @@ enum CurrentOrPreviousTask
 * the main program thread. The class will recieve tasks from the 
 * threadpool object being run by the main thread.
 */
-class ThreadTask
+class ThreadedEncodeWriter
 {
 public:
-	ThreadTask();
+	ThreadedEncodeWriter();
+
+	void BeginWriting(const std::string& filename, int fourcc, double fps,
+					cv::Size frameSize, bool isColor=true);
+
+	void FinishWriting();
 
 	/**
 	* @Return: True if the thread is currently running a task
@@ -89,6 +94,8 @@ public:
 	*/
 	void AddDiskTask(std::shared_ptr<DiskWritingTask> task);
 
+	void AddWritingTasks(std::shared_ptr<std::deque<DiskWritingTask>> tasks);
+
 	/**
 	* @Returns: true when the queue associated with this class
 	* have a new task it can run
@@ -100,9 +107,9 @@ public:
 	void ClearOldInformation();
 
 	/**
-	* @Returns: the Disk writing task assigned to this class
+	* @Returns: the Disk writing tasks assigned to this class
 	*/
-	std::shared_ptr<DiskWritingTask> GetDiskTask();
+	std::shared_ptr<std::deque<DiskWritingTask>> GetTasks();
 
 	/**
 	* @Returns: the allocation task assigned to this class
@@ -114,19 +121,23 @@ public:
 	*/
 	void WriteFramesToDisk(boost::thread::id thread_id);
 
-	std::shared_ptr<DiskWritingTask> GetDiskWritingTask();
+	std::shared_ptr<std::deque<DiskWritingTask>> GetDiskWritingTasksForRecycle();
 
+	
 private:
 	bool thread_running;
 
 	bool have_task;
 
+	bool finish_writing;
+
 	CurrentOrPreviousTask current_or_previous_task;
 
-	std::shared_ptr<DiskWritingTask> disk_writing_task;
+	std::shared_ptr<std::deque<DiskWritingTask>> disk_writing_tasks;
 	
 	std::shared_ptr<AllocationTask>  allocation_task;
 
+	cv::VideoWriter video_writer;
 };
 
 #endif // ThreadTask_h__

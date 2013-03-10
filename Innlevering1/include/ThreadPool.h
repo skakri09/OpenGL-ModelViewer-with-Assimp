@@ -37,14 +37,14 @@ private:
 	std::vector<std::shared_ptr<AllocationTask>> allocation_tasks_finished;
 
 
-	std::shared_ptr<ThreadTask> thread_1_task;
-	std::shared_ptr<ThreadTask> thread_2_task;
-	std::vector<std::shared_ptr<ThreadTask>> thread_communicators;
+	std::shared_ptr<ThreadedEncodeWriter> thread_1_task;
+	std::shared_ptr<ThreadedEncodeWriter> thread_2_task;
+	std::vector<std::shared_ptr<ThreadedEncodeWriter>> thread_communicators;
 
 	std::shared_ptr<boost::thread> thread_1;
 	std::shared_ptr<boost::thread> thread_2;
 };
 
-void Thread_main(std::shared_ptr<ThreadTask> thread_queue);
+void Thread_main(std::shared_ptr<ThreadedEncodeWriter> thread_queue);
 
 #endif // ThreadPool_h__
