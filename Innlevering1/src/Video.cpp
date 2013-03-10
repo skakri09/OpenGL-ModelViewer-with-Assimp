@@ -17,8 +17,24 @@ Video::~Video()
 void Video::Init(unsigned int window_width, unsigned int window_height)
 {
 	thread_pool.StartThreads();
+
 	this->window_width = window_width;
 	this->window_height = window_height;
+
+	mem_size = window_width*window_height*num_components;
+
+	glGenBuffers(NUM_PBO, pbos);
+
+	for(unsigned int i = 0; i < NUM_PBO; i++)
+	{
+		glBindBuffer(GL_PIXEL_PACK_BUFFER, pbos[i]);
+		glBufferData(GL_PIXEL_PACK_BUFFER, mem_size, NULL, GL_STATIC_READ);
+	}
+
+	glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+
+	vram_to_system_index = 0;
+	gpu_to_vram_index = NUM_PBO-1;
 
 	video_writer = std::make_shared<VideoWriterMutexed>();
 }
@@ -35,7 +51,7 @@ void Video::ToggleRecording( unsigned int target_fps )
 			std::string outPath = CreateVideoName("video/", ".avi");
 			recordTimer = 0.0f;
 			int codec =CV_FOURCC('X','V','I','D');
-			vw->open(outPath, codec, 10, cv::Size(window_width, window_height));
+			vw->open(outPath, codec, target_fps, cv::Size(window_width, window_height));
 			video_writer->ReleaseMutex(boost::this_thread::get_id());
 			OrderNewFrameBuffer();
 			OrderNewFrameBuffer();
@@ -69,16 +85,32 @@ void Video::StoreFrame(float deltaTime)
 				return;
 			}
 			recordTimer = 0.0f;
+
+			glBindBuffer(GL_PIXEL_PACK_BUFFER, pbos[gpu_to_vram_index]);
+
 			glReadBuffer(GL_FRONT);
 
 			Mat* img = video_frame_buffers.front()->GetNextFrame();
 			
-			//glPixelStorei(GL_PACK_ALIGNMENT, (img->step & 3) ? 1 : 4);
-			//glPixelStorei(GL_PACK_ROW_LENGTH, img->step/img->elemSize());
+			glPixelStorei(GL_PACK_ALIGNMENT, (img->step & 3) ? 1 : 4);
+			glPixelStorei(GL_PACK_ROW_LENGTH, img->step/img->elemSize());
 
+			glReadPixels(0, 0, window_width, window_height, GL_BGR, GL_UNSIGNED_BYTE, 0);
 
-			glReadPixels(0, 0, img->cols, img->rows, GL_BGR, GL_UNSIGNED_BYTE, &char_arrayyi[0]);
-			memcpy(img->data, &char_arrayyi[0], sizeof(char_arrayyi));
+			glBindBuffer(GL_PIXEL_PACK_BUFFER, pbos[vram_to_system_index]);
+			void* _data = glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+
+			if(_data != NULL)
+				memcpy(img->data, _data, mem_size);
+			
+			glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+			glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+
+			GLuint _temp = pbos[0];
+			for(int i = 1; i < NUM_PBO; i++)
+				pbos[i-1] = pbos[i];
+			pbos[NUM_PBO - 1] = _temp;
+
 			if(video_frame_buffers.front()->BufferFilled())
 			{
 				vfb_ptr p = video_frame_buffers.front();

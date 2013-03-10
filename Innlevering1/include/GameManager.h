@@ -249,12 +249,12 @@ private:
 	*PBO testing
 	*/
 	static const GLuint NUM_PBO = 2;
-	static const int num_components = 4;
+	static const int num_components = 3;
 	int vram_to_system_index;
 	int gpu_to_vram_index;
 
 	GLuint pbos[NUM_PBO];
-	unsigned char char_array[720*1280*3];
+	//unsigned char char_array[720*1280*3];
 	/**
 	* Generating the Pixel buffer objects
 	*/

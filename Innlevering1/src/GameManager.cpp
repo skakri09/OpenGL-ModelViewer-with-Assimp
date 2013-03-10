@@ -292,8 +292,8 @@ void GameManager::render()
 	if(SaveImagesToDisc)
 		videoRecorder.StoreFrame(deltaTime);
 
-	if(!SaveImagesToDisc)
-		ReadBack(window_width, window_height);
+	//if(!SaveImagesToDisc)
+	//	ReadBack(window_width, window_height);
 
 	CHECK_GL_ERROR();
 }
@@ -463,7 +463,7 @@ void GameManager::play()
 					ZoomOut();
 				if(event.key.keysym.sym == SDLK_p)
 				{
-					videoRecorder.ToggleRecording(0);
+					videoRecorder.ToggleRecording(200);
 					SaveImagesToDisc = !SaveImagesToDisc;
 					/*if(!SaveImagesToDisc)
 					{
@@ -814,7 +814,7 @@ void GameManager::ReadBack( unsigned int width, unsigned int height )
 	CHECK_GL_ERROR();
 	glReadBuffer(GL_FRONT);
 	glBindBuffer(GL_PIXEL_PACK_BUFFER, pbos[gpu_to_vram_index]);
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	//glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	//glPixelStorei(GL_PACK_ROW_LENGTH, img->step/img->elemSize());
 	//tutorial uses GL_BGRA, possible we must change. Either way we only need 3 components// GL_BGR
 	glReadPixels(0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, 0);
