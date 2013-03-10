@@ -65,7 +65,7 @@ void Video::StoreFrame(float deltaTime)
 			{
 				//THREADING_EXCEPTION("no frame buffers ready to be written to");
 				std::cout << "THREADING_EXCEPTION(\"no frame buffers ready to be written to\");" << std::endl;
-				OrderNewFrameBuffer();
+				//OrderNewFrameBuffer();
 				return;
 			}
 			recordTimer = 0.0f;
@@ -76,8 +76,9 @@ void Video::StoreFrame(float deltaTime)
 			//glPixelStorei(GL_PACK_ALIGNMENT, (img->step & 3) ? 1 : 4);
 			//glPixelStorei(GL_PACK_ROW_LENGTH, img->step/img->elemSize());
 
-			//glReadPixels(0, 0, img->cols, img->rows, GL_BGR, GL_UNSIGNED_BYTE, img->data);
 
+			glReadPixels(0, 0, img->cols, img->rows, GL_BGR, GL_UNSIGNED_BYTE, &char_arrayyi[0]);
+			memcpy(img->data, &char_arrayyi[0], sizeof(char_arrayyi));
 			if(video_frame_buffers.front()->BufferFilled())
 			{
 				vfb_ptr p = video_frame_buffers.front();

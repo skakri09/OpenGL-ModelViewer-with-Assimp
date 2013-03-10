@@ -182,6 +182,7 @@ void GameManager::init()
 	SaveImagesToDisc = false;
 	frameCounter = 0;
 	
+	InitReadback( window_width, window_height);
 	videoRecorder.Init(window_width,window_height);
 }
 
@@ -288,8 +289,11 @@ void GameManager::render()
 	/*Rendering the directoryBrowser*/
 	dirBrowser->RenderDirectoryBrowser(mouseX, mouseY, mouseState);
 	
-	//if(SaveImagesToDisc)
-	videoRecorder.StoreFrame(deltaTime);
+	if(SaveImagesToDisc)
+		videoRecorder.StoreFrame(deltaTime);
+
+	if(!SaveImagesToDisc)
+		ReadBack(window_width, window_height);
 
 	CHECK_GL_ERROR();
 }
@@ -460,6 +464,7 @@ void GameManager::play()
 				if(event.key.keysym.sym == SDLK_p)
 				{
 					videoRecorder.ToggleRecording(0);
+					SaveImagesToDisc = !SaveImagesToDisc;
 					/*if(!SaveImagesToDisc)
 					{
 					SaveImagesToDisc = true;
@@ -482,7 +487,7 @@ void GameManager::play()
 		//Render, and swap front and back buffers
 		render();
 		SDL_GL_SwapWindow(main_window);
-
+		CHECK_GL_ERROR();
 		RotateLight();
 		deltaTime = static_cast<float>(my_timer.elapsedAndRestart());
 		fpsTimer += deltaTime;
@@ -769,10 +774,153 @@ void GameManager::RotateLight()
 	lightView = glm::lookAt(lightPosition, glm::vec3(0), glm::vec3(0, 1, 0));
 }
 
+void GameManager::InitReadback( unsigned int width, unsigned int height )
+{
+
+	_membuffer = NULL;
+	_tempbuff = NULL;
+
+	_tempbuff = (unsigned char*)valloc(BUFSIZE, PAGE_READWRITE);
+	vlock(_tempbuff, BUFSIZE);
+
+	unsigned int mem_size = width*height*num_components;
+
+	glGenBuffers(NUM_PBO, pbos);
+	
+	for(unsigned int i = 0; i < NUM_PBO; i++)
+	{
+		glBindBuffer(GL_PIXEL_PACK_BUFFER, pbos[i]);
+		glBufferData(GL_PIXEL_PACK_BUFFER, mem_size, NULL, GL_STATIC_READ);
+	}
+
+	glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+
+	vram_to_system_index = 0;
+	gpu_to_vram_index = NUM_PBO-1;
+	
+	if(_membuffer != NULL)
+	{
+		vfree(_membuffer);
+		_membuffer = NULL;
+	}
+	_membuffer = (unsigned char*)valloc(mem_size, PAGE_READWRITE);
+	vlock(_membuffer, mem_size);
+
+}
 
 
+void GameManager::ReadBack( unsigned int width, unsigned int height )
+{
+	CHECK_GL_ERROR();
+	glReadBuffer(GL_FRONT);
+	glBindBuffer(GL_PIXEL_PACK_BUFFER, pbos[gpu_to_vram_index]);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	//glPixelStorei(GL_PACK_ROW_LENGTH, img->step/img->elemSize());
+	//tutorial uses GL_BGRA, possible we must change. Either way we only need 3 components// GL_BGR
+	glReadPixels(0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, 0);
+
+	CHECK_GL_ERROR();
+
+	glBindBuffer(GL_PIXEL_PACK_BUFFER, pbos[vram_to_system_index]);
+	void* _data = glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+	CHECK_GL_ERROR();
+	unsigned int mem_size = width*height*num_components;
+
+	if(_data != NULL)
+		FastMemcpy(_membuffer, _data, _tempbuff, BUFSIZE, mem_size);
+		//memcpy(char_array, _data, mem_size);
 
 
+	glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+	glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 
+	GLuint _temp = pbos[0];
+	for(int i = 1; i < NUM_PBO; i++)
+		pbos[i-1] = pbos[i];
+	pbos[NUM_PBO - 1] = _temp;
+}
+
+void GameManager::FastMemcpy( void* dst, const void* src, void* buf, size_t bufsize, size_t nbytes )
+{
+	__asm 
+	{
+		mov  esi, src
+			mov  edi, dst
+			mov  eax, buf
+			mov  ebx, bufsize
+			bsr  ecx, ebx
+			mov  ebx, nbytes
+			shr  ebx, cl
+main_loop:
+		test  ebx, ebx
+			jz  main_loop_end
+			mov  edx, eax
+			mov  ecx, bufsize
+			shr  ecx, 7
+L1_cache_loop:
+		test  ecx, ecx
+			jz  L1_cache_loop_end
+			prefetchnta [esi + 64 * 10]
+		movaps  xmm0, [esi]
+		movaps  xmm1, [esi + 16]
+		movaps  xmm2, [esi + 32]
+		prefetchnta [esi + 64 * 11]
+		movaps  xmm3, [esi + 48]
+		movaps  xmm4, [esi + 64]
+		movaps  xmm5, [esi + 80]
+		movaps  xmm6, [esi + 96]
+		movaps  xmm7, [esi + 112]
+
+		movaps  [edx], xmm0
+			movaps  [edx + 16], xmm1
+			movaps  [edx + 32], xmm2
+			movaps  [edx + 48], xmm3
+			movaps  [edx + 64], xmm4
+			movaps  [edx + 80], xmm5
+			movaps  [edx + 96], xmm6
+			movaps  [edx + 112], xmm7
+
+			add  esi, 128
+			add  edx, 128
+
+			sub  ecx, 1
+			jmp  L1_cache_loop
+L1_cache_loop_end:
+		mov  edx, eax
+			mov  ecx, bufsize
+			shr  ecx, 7
+stream_loop:
+		test  ecx, ecx
+			jz  stream_loop_end
+			movaps  xmm0, [edx]
+		movaps  xmm1, [edx + 16]
+		movaps  xmm2, [edx + 32]
+		movaps  xmm3, [edx + 48]
+		movaps  xmm4, [edx + 64]
+		movaps  xmm5, [edx + 80]
+		movaps  xmm6, [edx + 96]
+		movaps  xmm7, [edx + 112]
+
+		movntps  [edi], xmm0
+			movntps  [edi + 16], xmm1
+			movntps  [edi + 32], xmm2
+			movntps  [edi + 48], xmm3
+			movntps  [edi + 64], xmm4
+			movntps  [edi + 80], xmm5
+			movntps  [edi + 96], xmm6
+			movntps  [edi + 112], xmm7
+
+			add  edx, 128
+			add  edi, 128
+
+			sub  ecx, 1
+			jmp  stream_loop
+stream_loop_end:
+		sub  ebx, 1
+			jmp  main_loop
+main_loop_end:
+		sfence
+	}
+}
 
 

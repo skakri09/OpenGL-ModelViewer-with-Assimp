@@ -1,5 +1,13 @@
+#define valloc(size, prot) VirtualAllocEx(GetCurrentProcess(), NULL, (size), MEM_COMMIT, (prot))
+#define vfree(mem)  VirtualFreeEx(GetCurrentProcess(), mem, 0, MEM_RELEASE)
+#define vlock(mem, size) VirtualLock((mem), (size))
+#define BUFSIZE (4*2048)
+
 #ifndef _GAMEMANAGER_H_
 #define _GAMEMANAGER_H_
+
+
+
 #pragma warning( disable : 4345 )
 #include <memory>
 
@@ -236,6 +244,28 @@ private:
 	unsigned int frameCounter;
 	
 	Video videoRecorder;
+
+	/*****
+	*PBO testing
+	*/
+	static const GLuint NUM_PBO = 2;
+	static const int num_components = 4;
+	int vram_to_system_index;
+	int gpu_to_vram_index;
+
+	GLuint pbos[NUM_PBO];
+	unsigned char char_array[720*1280*3];
+	/**
+	* Generating the Pixel buffer objects
+	*/
+	void InitReadback(unsigned int width, unsigned int height);
+
+	void ReadBack(unsigned int width, unsigned int height);
+
+	void FastMemcpy(void* dst, const void* src, void* buf, size_t bufsize, size_t nbytes);
+
+	unsigned char* _membuffer;
+	unsigned char* _tempbuff; // used during fast mem copy
 };
 
 #endif // _GAMEMANAGER_H_
