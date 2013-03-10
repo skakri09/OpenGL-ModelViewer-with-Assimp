@@ -26,15 +26,12 @@ public:
 
 	void ScheduleAllocation(vfb_ptr	video_frame_buffer);
 
-	void ScheduleWriteToDisk(vfb_ptr video_frame_buffer, vwm_ptr video_writer, bool flip);
+	void ScheduleWriteToDisk(vfb_ptr video_frame_buffer, bool flip);
 
 
 private:
-	std::deque<std::shared_ptr<DiskWritingTask>> disk_writing_task_queue;
+	std::deque<DiskWritingTask> disk_writing_task_queue;
 	std::deque<std::shared_ptr<AllocationTask>> allocation_task_queue;
-
-	std::vector<std::shared_ptr<DiskWritingTask>> disk_writing_tasks_finished;
-	std::vector<std::shared_ptr<AllocationTask>> allocation_tasks_finished;
 
 
 	std::shared_ptr<ThreadedEncodeWriter> thread_1_task;

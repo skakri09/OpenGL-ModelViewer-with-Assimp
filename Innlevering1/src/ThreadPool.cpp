@@ -26,15 +26,18 @@ void ThreadPool::Update(std::vector<vfb_ptr>* none_main_thread_buffers)
 	//Must ask for old tasks before assigning new tasks if we want to get old memory back
 	for(unsigned int i = 0; i < thread_communicators.size(); i++)
 	{
-		if(!thread_communicators.at(i)->ThreadRunning() && !thread_communicators.at(i)->HaveNewTaskToRun())
+		if(thread_communicators.at(i)->Get_Status() == FINISHED)
 		{
-			if(thread_communicators.at(i)->WhatTaskToRun() == WRITING_TASK)
+			std::shared_ptr<std::deque<DiskWritingTask>> sp_dq_dwt = thread_communicators.at(i)->GetDiskWritingTasksForRecycle();
+
+			for(unsigned int i = 0; i < sp_dq_dwt->size(); i++)
 			{
-				none_main_thread_buffers->push_back(thread_communicators.at(i)->GetDiskWritingTasksForRecycle()->video_frame_buffer);
+				none_main_thread_buffers->push_back(sp_dq_dwt->at(i).video_frame_buffer);
 				none_main_thread_buffers->back()->ResetBufferForReuse();
-				thread_communicators.at(i)->ClearOldInformation();
+
 			}
-				
+
+			thread_communicators.at(i)->ClearOldInformation();
 		}
 	}
 
@@ -43,12 +46,7 @@ void ThreadPool::Update(std::vector<vfb_ptr>* none_main_thread_buffers)
 		for(unsigned int i = 0; i < thread_communicators.size(); i++)
 		{
 			if(!thread_communicators.at(i)->ThreadRunning() && !thread_communicators.at(i)->HaveNewTaskToRun())
-			{
-				thread_communicators.at(i)->AddDiskTask(disk_writing_task_queue.front());
-				disk_writing_task_queue.pop_front();
-			}
-			if(disk_writing_task_queue.empty())
-				break;
+				thread_communicators.at(i)->AddWritingTasks(&disk_writing_task_queue);
 		}
 	}
 
@@ -56,13 +54,13 @@ void ThreadPool::Update(std::vector<vfb_ptr>* none_main_thread_buffers)
 	{
 		for(unsigned int i = 0; i < thread_communicators.size(); i++)
 		{
-			if(!thread_communicators.at(i)->ThreadRunning() && !thread_communicators.at(i)->HaveNewTaskToRun())
-			{
-				thread_communicators.at(i)->AddAllocationTask(allocation_task_queue.front());
-				allocation_task_queue.pop_front();
-			}
-			if(allocation_task_queue.empty())
-				break;
+			//if(!thread_communicators.at(i)->ThreadRunning() && !thread_communicators.at(i)->HaveNewTaskToRun())
+			//{
+			//	thread_communicators.at(i)->AddAllocationTask(allocation_task_queue.front());
+			//	allocation_task_queue.pop_front();
+			//}
+			//if(allocation_task_queue.empty())
+			//	break;
 		}
 	}
 }
@@ -72,11 +70,10 @@ void ThreadPool::ScheduleAllocation( vfb_ptr video_frame_buffer )
 	allocation_task_queue.push_back(std::make_shared<AllocationTask>(video_frame_buffer));
 }
 
-void ThreadPool::ScheduleWriteToDisk( vfb_ptr video_frame_buffer, 
-									vwm_ptr video_writer, bool flip )
+void ThreadPool::ScheduleWriteToDisk( vfb_ptr video_frame_buffer, bool flip )
 {
 	//add if(FULL)
-	disk_writing_task_queue.push_back(std::make_shared<DiskWritingTask>(video_frame_buffer, video_writer, flip));
+	disk_writing_task_queue.push_back(DiskWritingTask(video_frame_buffer, flip));
 }
 
 
@@ -93,15 +90,6 @@ void Thread_main( std::shared_ptr<ThreadedEncodeWriter> thread_queue )
 			thread_queue->SetThreadRunning();
 		
 			thread_queue->WriteFramesToDisk(thread_id);
-
-			/*if(thread_queue->WhatTaskToRun() == ALLOCATION_TASK)
-			{
-			thread_queue->GetAllocationTask()->video_frame_buffer->Lock_AllocAndInit(thread_id);
-			}*/
-			/*else if(thread_queue->WhatTaskToRun() == WRITING_TASK)
-			{
-				thread_queue->WriteFramesToDisk(thread_id);
-			}*/
 
 			thread_queue->SetThreadFinished();
 		}

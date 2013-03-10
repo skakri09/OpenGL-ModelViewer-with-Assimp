@@ -116,7 +116,7 @@ void Video::StoreFrame(float deltaTime)
 				vfb_ptr p = video_frame_buffers.front();
 				video_frame_buffers.pop_front();
 
-				thread_pool.ScheduleWriteToDisk(p, video_writer, true);
+				thread_pool.ScheduleWriteToDisk(p, true);
 			}
 			//img = NULL;
 		}
