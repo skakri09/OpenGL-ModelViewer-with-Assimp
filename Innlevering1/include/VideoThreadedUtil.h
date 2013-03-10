@@ -108,8 +108,6 @@ typedef std::shared_ptr<VideoWriterMutexed> vwm_ptr;
 typedef std::shared_ptr<cv::VideoWriter> video_writer_ptr;
 
 
-#pragma region VideoFrame
-
 struct VideoFrame
 {
 	VideoFrame(cv::Size window_size, int _type)
@@ -149,18 +147,34 @@ enum VideoFrameBufferStatus
 struct VideoFrameBuffer
 {
 public:
-	VideoFrameBuffer(cv::Size window_size, int _type, unsigned int alloc_size)
+	VideoFrameBuffer(cv::Size window_size, int _type, unsigned int alloc_size, bool initialize = false)
 	{
 		this->window_size = window_size;
 		this->_type = _type;
 		this->alloc_size = alloc_size;
 		
-		ready = false;
+		if(initialize)
+		{
+			video_frames_buffer = std::make_shared<std::deque<std::shared_ptr<VideoFrame>>>();
+			// Creating the VideoFrame objects
+			for(unsigned int i=0; i < alloc_size; i++)
+			{
+				vf_ptr p = std::make_shared<VideoFrame>(window_size, _type);
+				video_frames_buffer->push_back(std::make_shared<VideoFrame>(window_size, _type));
+			}
+			buffer_status = READ_FOR_REUSE;
+			filled_frames = 0;
+			ready = true;
+		}
+		else
+		{
+			ready = false;
+			buffer_status = NOT_INITIALIZED;
+		}
 		locked = false;
 		filled_frames = 0;
-		buffer_status = NOT_INITIALIZED;
 	}
-	
+
 	/**
 	* Halts the caller thread until it can lock the thread. When it's successfully
 	* in locking the thread, or if it already owned this object, the video_writer 

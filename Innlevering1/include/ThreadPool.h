@@ -28,11 +28,16 @@ public:
 
 	void ScheduleWriteToDisk(vfb_ptr video_frame_buffer, bool flip);
 
+	void BeginWriting(const std::string& video_path, int fourcc, double fps,
+						cv::Size frame_size, bool isColor = true);
+
+	void FinishWriting();
 
 private:
-	std::deque<DiskWritingTask> disk_writing_task_queue;
+	std::deque<DiskWritingTask>* disk_writing_task_queue;
 	std::deque<std::shared_ptr<AllocationTask>> allocation_task_queue;
 
+	bool stop_writing_after_current_frames;
 
 	std::shared_ptr<ThreadedEncodeWriter> thread_1_task;
 	std::shared_ptr<ThreadedEncodeWriter> thread_2_task;
@@ -42,6 +47,6 @@ private:
 	std::shared_ptr<boost::thread> thread_2;
 };
 
-void Thread_main(std::shared_ptr<ThreadedEncodeWriter> thread_queue);
+void Writer_thread_main(std::shared_ptr<ThreadedEncodeWriter> thread_queue);
 
 #endif // ThreadPool_h__

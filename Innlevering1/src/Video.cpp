@@ -21,6 +21,9 @@ void Video::Init(unsigned int window_width, unsigned int window_height)
 	this->window_width = window_width;
 	this->window_height = window_height;
 
+	for(unsigned int i =0; i < min_allocated_buffers; i++)
+		video_frame_buffers.push_back(std::make_shared<VideoFrameBuffer>(cv::Size(window_width, window_height), _type, frame_buffer_size, true));
+
 	mem_size = window_width*window_height*image_components;
 
 	glGenBuffers(NUM_PBO, pbos);
@@ -36,37 +39,29 @@ void Video::Init(unsigned int window_width, unsigned int window_height)
 	vram_to_system_index = 0;
 	gpu_to_vram_index = NUM_PBO-1;
 
-	video_writer = std::make_shared<VideoWriterMutexed>();
 }
 
 void Video::ToggleRecording( unsigned int target_fps )
 {
 	if(!recording)
 	{
-		std::shared_ptr<cv::VideoWriter> vw = video_writer->Try_Lock_GetVideoWriter(boost::this_thread::get_id());
-		if(vw != NULL)
-		{
-			recording = true;
-			this->fps = target_fps;
-			std::string outPath = CreateVideoName("video/", ".avi");
-			recordTimer = 0.0f;
-			int codec =CV_FOURCC('X','V','I','D');
-			vw->open(outPath, codec, target_fps, cv::Size(window_width, window_height));
-			video_writer->ReleaseMutex(boost::this_thread::get_id());
-			OrderNewFrameBuffer();
-			OrderNewFrameBuffer();
-			OrderNewFrameBuffer();
-			OrderNewFrameBuffer();
-			OrderNewFrameBuffer();
-		}
-		else
-			THREADING_EXCEPTION("video writer object is in use");
+		recording = true;
+		this->fps = target_fps;
+		std::string outPath = CreateVideoName("video/", ".avi");
+		recordTimer = 0.0f;
+		int codec =CV_FOURCC('X','V','I','D');
+
+		thread_pool.BeginWriting(outPath, codec, fps, cv::Size(window_width, window_height));
+		/*OrderNewFrameBuffer();
+		OrderNewFrameBuffer();
+		OrderNewFrameBuffer();
+		OrderNewFrameBuffer();
+		OrderNewFrameBuffer();*/
 	}
 	else
 	{
 		recording = false;
-		video_writer->Lock_GetVideoWriter(boost::this_thread::get_id())->release();
-		//stop the recording
+		thread_pool.FinishWriting();
 	}
 }
 
@@ -130,7 +125,7 @@ void Video::Update()
 	
 	if( (video_frame_buffers.size() + buffers_being_allocated.size()) < min_allocated_buffers)
 	{
-		OrderNewFrameBuffer();
+		
 	}
 
 	for(std::vector<vfb_ptr>::iterator i = buffers_being_allocated.begin(); i != buffers_being_allocated.end();)

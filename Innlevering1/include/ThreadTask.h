@@ -48,9 +48,11 @@ struct AllocationTask
 
 enum ThreadedEncoderWriter_STATUS
 {
+	IDLE,
 	NO_TASK,
 	WORKING,
-	FINISHED
+	THIS_TASK_FINISHED,
+	SHUT_DOWN_WRITER_WHEN_DONE
 };
 /**
 * A class that should be passed to a thread as it's access point to 
@@ -61,11 +63,13 @@ class ThreadedEncodeWriter
 {
 public:
 	ThreadedEncodeWriter();
+	~ThreadedEncodeWriter();
 
 	void BeginWriting(const std::string& filename, int fourcc, double fps,
 					cv::Size frameSize, bool isColor=true);
 
 	void FinishWriting();
+	bool IsFinished();
 
 	/**
 	* @Return: True if the thread is currently running a task
@@ -91,8 +95,9 @@ public:
 
 	/**
 	* Place a disk writing tasks in this threads' queue of tasks
+	* @Return: true if the adding of tasks was successfull;
 	*/
-	void AddWritingTasks(const std::deque<DiskWritingTask>* tasks);
+	bool AddWritingTasks(std::deque<DiskWritingTask>* tasks);
 
 	/**
 	* @Returns: true when the queue associated with this class
@@ -105,14 +110,16 @@ public:
 	/**
 	* @Returns: the Disk writing tasks assigned to this class
 	*/
-	std::shared_ptr<std::deque<DiskWritingTask>> GetTasks();
+	std::deque<DiskWritingTask>* GetTasks();
+
+	std::deque<DiskWritingTask>* GetDiskWritingTasksForRecycle();
 
 	/**
 	* Writes the frames stored in the DiskWritingTask assigned to this class
 	*/
 	void WriteFramesToDisk(boost::thread::id thread_id);
 
-	std::shared_ptr<std::deque<DiskWritingTask>> GetDiskWritingTasksForRecycle();
+	
 
 	ThreadedEncoderWriter_STATUS Get_Status();
 
@@ -125,11 +132,12 @@ private:
 
 	ThreadedEncoderWriter_STATUS object_status;
 
-	std::shared_ptr<std::deque<DiskWritingTask>> disk_writing_tasks;
+	std::deque<DiskWritingTask>* disk_writing_tasks;
 	
 	//std::shared_ptr<AllocationTask>  allocation_task;
 
-	cv::VideoWriter video_writer;
+	VideoWriterMutexed video_writer;
+	//cv::VideoWriter video_writer;
 };
 
 #endif // ThreadTask_h__

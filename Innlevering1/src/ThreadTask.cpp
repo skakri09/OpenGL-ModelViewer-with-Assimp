@@ -4,23 +4,60 @@ ThreadedEncodeWriter::ThreadedEncodeWriter()
 {
 	have_task = false;
 	thread_running = false;
-	object_status = NO_TASK;
+	object_status = IDLE;
+	disk_writing_tasks = new std::deque<DiskWritingTask>();
 }
 
 
-void ThreadedEncodeWriter::BeginWriting( const std::string& filename, int fourcc, double fps,
-									cv::Size frameSize, bool isColor )
+ThreadedEncodeWriter::~ThreadedEncodeWriter()
 {
-	video_writer.open(filename, fourcc, fps, frameSize, isColor);
+	object_status = SHUT_DOWN_WRITER_WHEN_DONE;
+	video_writer_ptr p = video_writer.Lock_GetVideoWriter(boost::this_thread::get_id());
+	if(p->isOpened())
+		p->release();
+	if(disk_writing_tasks != NULL)
+	{
+		delete disk_writing_tasks;
+		disk_writing_tasks = NULL;
+	}
+}
+
+void ThreadedEncodeWriter::BeginWriting( const std::string& filename, int fourcc, double fps,
+	cv::Size frameSize, bool isColor )
+{
+	video_writer_ptr vwp = video_writer.Lock_GetVideoWriter(boost::this_thread::get_id());
+	vwp->open(filename, fourcc, fps, frameSize, isColor);
+	video_writer.ReleaseMutex(boost::this_thread::get_id());
+
+	object_status = NO_TASK;
+	have_task = false;
+	thread_running = false;
+	finish_writing = false;
 }
 
 
 void ThreadedEncodeWriter::FinishWriting()
 {
 	finish_writing = true;
-	object_status = FINISHED;
+	if(object_status == THIS_TASK_FINISHED || object_status == IDLE || object_status == NO_TASK)
+	{
+		video_writer_ptr vwp = video_writer.Try_Lock_GetVideoWriter(boost::this_thread::get_id());
+		if(vwp != NULL)
+		{
+			vwp->release();
+			video_writer.ReleaseMutex(boost::this_thread::get_id());
+			object_status = IDLE;
+		}
+		else THREADING_EXCEPTION("something wrong with the logic. This else should not happen");
+	}
+	else
+		object_status = SHUT_DOWN_WRITER_WHEN_DONE;
 }
 
+bool ThreadedEncodeWriter::IsFinished()
+{
+	return finish_writing;
+}
 
 bool ThreadedEncodeWriter::ThreadRunning()
 {
@@ -31,6 +68,7 @@ void ThreadedEncodeWriter::SetThreadFinished()
 {
 	have_task = false;
 	thread_running = false;
+	object_status = THIS_TASK_FINISHED;
 }
 
 void ThreadedEncodeWriter::SetThreadRunning()
@@ -53,15 +91,20 @@ void ThreadedEncodeWriter::SetThreadRunning()
 
 
 
-void ThreadedEncodeWriter::AddWritingTasks(const std::deque<DiskWritingTask>* tasks )
+bool ThreadedEncodeWriter::AddWritingTasks(std::deque<DiskWritingTask>* tasks )
 {
 	if(!thread_running && !have_task)
 	{
 		disk_writing_tasks->insert(disk_writing_tasks->end(), tasks->begin(), tasks->end());
+		have_task = true;
 		object_status = WORKING;
+		return true;
 	}
 	else
+	{
 		THREADING_EXCEPTION("thread is already running");
+		return false;
+	}
 }
 
 bool ThreadedEncodeWriter::HaveNewTaskToRun()
@@ -69,12 +112,12 @@ bool ThreadedEncodeWriter::HaveNewTaskToRun()
 	return have_task;
 }
 
-std::shared_ptr<std::deque<DiskWritingTask>> ThreadedEncodeWriter::GetTasks()
+std::deque<DiskWritingTask>* ThreadedEncodeWriter::GetTasks()
 {
 	return disk_writing_tasks;
 }
 
-std::shared_ptr<std::deque<DiskWritingTask>> ThreadedEncodeWriter::GetDiskWritingTasksForRecycle()
+std::deque<DiskWritingTask>* ThreadedEncodeWriter::GetDiskWritingTasksForRecycle()
 {
 	if(!thread_running)
 	{
@@ -85,7 +128,8 @@ std::shared_ptr<std::deque<DiskWritingTask>> ThreadedEncodeWriter::GetDiskWritin
 
 void ThreadedEncodeWriter::WriteFramesToDisk( boost::thread::id thread_id )
 {
-	if(video_writer.isOpened())
+	video_writer_ptr writer = video_writer.Lock_GetVideoWriter(thread_id);
+	if(writer->isOpened())
 	{
 		for(unsigned int i = 0; i < disk_writing_tasks->size(); i++)
 		{
@@ -99,10 +143,13 @@ void ThreadedEncodeWriter::WriteFramesToDisk( boost::thread::id thread_id )
 				if(disk_writing_tasks->at(i).flip)
 					p->Flip();
 
-				video_writer << p->image;
+				*writer << p->image;
 			}
 			video_frame_buffer->ReleaseMutex(thread_id);
 		}
+		if(object_status == SHUT_DOWN_WRITER_WHEN_DONE && writer->isOpened())
+			writer->release();
+		video_writer.ReleaseMutex(thread_id);
 	}
 	else
 		THREADING_EXCEPTION("videowriter is not open");
@@ -122,4 +169,3 @@ ThreadedEncoderWriter_STATUS ThreadedEncodeWriter::Get_Status()
 }
 
 
-	

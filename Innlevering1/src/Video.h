@@ -121,8 +121,6 @@ private:
 
 	bool recording;
 
-	vwm_ptr video_writer;
-
 	void OrderNewFrameBuffer();
 
 	std::string CreateVideoName(std::string folder, std::string format);
