@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type='text/xsl' href='_UpgradeReport_Files/UpgradeReport.xslt'?><UpgradeLog>
+<Properties><Property Name="Solution" Value="APIHookingComplete">
+</Property><Property Name="Solution File" Value="C:\c++\APIHookingComplete (CodeProject Tutorial)\APIHookingComplete.sln">
+</Property><Property Name="Date" Value="15. mars 2013">
+</Property><Property Name="Time" Value="20:32">
+</Property></Properties><Event ErrorLevel="0" Project="" Source="APIHookingComplete.sln" Description="File successfully backed up as C:\c++\APIHookingComplete (CodeProject Tutorial)\APIHookingComplete.sln.old">
+</Event><Event ErrorLevel="0" Project="APIHook" Source="APIHook\APIHook.vcproj" Description="Converting project file 'C:\c++\APIHookingComplete (CodeProject Tutorial)\APIHook\APIHook.vcproj'.">
+</Event><Event ErrorLevel="1" Project="APIHook" Source="APIHook\APIHook.vcproj" Description="VCWebServiceProxyGeneratorTool is no longer supported. The tool has been removed from your project settings.">
+</Event><Event ErrorLevel="0" Project="APIHook" Source="APIHook\APIHook.vcproj" Description="Done converting to new project file 'C:\c++\APIHookingComplete (CodeProject Tutorial)\APIHook\APIHook.vcxproj'.">
+</Event><Event ErrorLevel="3" Project="APIHook" Source="APIHook\APIHook.vcproj" Description="Converted">
+</Event><Event ErrorLevel="0" Project="EnumProcesses" Source="EnumProcesses\EnumProcesses.vcproj" Description="Converting project file 'C:\c++\APIHookingComplete (CodeProject Tutorial)\EnumProcesses\EnumProcesses.vcproj'.">
+</Event><Event ErrorLevel="1" Project="EnumProcesses" Source="EnumProcesses\EnumProcesses.vcproj" Description="VCWebServiceProxyGeneratorTool is no longer supported. The tool has been removed from your project settings.">
+</Event><Event ErrorLevel="0" Project="EnumProcesses" Source="EnumProcesses\EnumProcesses.vcproj" Description="Done converting to new project file 'C:\c++\APIHookingComplete (CodeProject Tutorial)\EnumProcesses\EnumProcesses.vcxproj'.">
+</Event><Event ErrorLevel="3" Project="EnumProcesses" Source="EnumProcesses\EnumProcesses.vcproj" Description="Converted">
+</Event><Event ErrorLevel="0" Project="CreateWithDLL" Source="CreateWithDLL\CreateWithDLL.vcproj" Description="Converting project file 'C:\c++\APIHookingComplete (CodeProject Tutorial)\CreateWithDLL\CreateWithDLL.vcproj'.">
+</Event><Event ErrorLevel="1" Project="CreateWithDLL" Source="CreateWithDLL\CreateWithDLL.vcproj" Description="VCWebServiceProxyGeneratorTool is no longer supported. The tool has been removed from your project settings.">
+</Event><Event ErrorLevel="0" Project="CreateWithDLL" Source="CreateWithDLL\CreateWithDLL.vcproj" Description="Done converting to new project file 'C:\c++\APIHookingComplete (CodeProject Tutorial)\CreateWithDLL\CreateWithDLL.vcxproj'.">
+</Event><Event ErrorLevel="3" Project="CreateWithDLL" Source="CreateWithDLL\CreateWithDLL.vcproj" Description="Converted">
+</Event><Event ErrorLevel="0" Project="WSHook" Source="WSHook\WSHook.vcproj" Description="Converting project file 'C:\c++\APIHookingComplete (CodeProject Tutorial)\WSHook\WSHook.vcproj'.">
+</Event><Event ErrorLevel="1" Project="WSHook" Source="WSHook\WSHook.vcproj" Description="VCWebServiceProxyGeneratorTool is no longer supported. The tool has been removed from your project settings.">
+</Event><Event ErrorLevel="0" Project="WSHook" Source="WSHook\WSHook.vcproj" Description="Done converting to new project file 'C:\c++\APIHookingComplete (CodeProject Tutorial)\WSHook\WSHook.vcxproj'.">
+</Event><Event ErrorLevel="3" Project="WSHook" Source="WSHook\WSHook.vcproj" Description="Converted">
+</Event><Event ErrorLevel="0" Project="MSNDetourDLL" Source="MSNDetourDLL\MSNDetourDLL.vcproj" Description="Converting project file 'C:\c++\APIHookingComplete (CodeProject Tutorial)\MSNDetourDLL\MSNDetourDLL.vcproj'.">
+</Event><Event ErrorLevel="1" Project="MSNDetourDLL" Source="MSNDetourDLL\MSNDetourDLL.vcproj" Description="VCWebServiceProxyGeneratorTool is no longer supported. The tool has been removed from your project settings.">
+</Event><Event ErrorLevel="0" Project="MSNDetourDLL" Source="MSNDetourDLL\MSNDetourDLL.vcproj" Description="Done converting to new project file 'C:\c++\APIHookingComplete (CodeProject Tutorial)\MSNDetourDLL\MSNDetourDLL.vcxproj'.">
+</Event><Event ErrorLevel="3" Project="MSNDetourDLL" Source="MSNDetourDLL\MSNDetourDLL.vcproj" Description="Converted">
+</Event><Event ErrorLevel="0" Project="DetourByAddr" Source="DetourByAddr\DetourByAddr.vcproj" Description="Converting project file 'C:\c++\APIHookingComplete (CodeProject Tutorial)\DetourByAddr\DetourByAddr.vcproj'.">
+</Event><Event ErrorLevel="1" Project="DetourByAddr" Source="DetourByAddr\DetourByAddr.vcproj" Description="VCWebServiceProxyGeneratorTool is no longer supported. The tool has been removed from your project settings.">
+</Event><Event ErrorLevel="0" Project="DetourByAddr" Source="DetourByAddr\DetourByAddr.vcproj" Description="Done converting to new project file 'C:\c++\APIHookingComplete (CodeProject Tutorial)\DetourByAddr\DetourByAddr.vcxproj'.">
+</Event><Event ErrorLevel="3" Project="DetourByAddr" Source="DetourByAddr\DetourByAddr.vcproj" Description="Converted">
+</Event><Event ErrorLevel="0" Project="" Source="APIHookingComplete.sln" Description="Solution converted successfully">
+</Event><Event ErrorLevel="3" Project="" Source="APIHookingComplete.sln" Description="Converted">
+</Event></UpgradeLog>
